@@ -1,0 +1,9 @@
+productName = "Vust Desk"
+identifier = "cc.vust.desk_dev"
+[[app.windows]]
+title = "Testing"
+width = 1024
+height = 768
+decorations = false
+visible = false
+transparent = true

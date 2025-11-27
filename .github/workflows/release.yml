@@ -1,0 +1,26 @@
+name: Release
+
+run-name: "v${{ inputs.version }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "App version (x.y.z)"
+        required: true
+
+jobs:
+  release:
+    permissions:
+      contents: write
+
+    uses: ./.github/workflows/publish.yml
+
+    with:
+      app_version: ${{ inputs.version }}
+      release_name: "Version ${{ inputs.version }}"
+      release_tag: "${{ inputs.version }}"
+      prerelease: false
+    secrets:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
