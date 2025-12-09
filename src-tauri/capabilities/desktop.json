@@ -1,7 +1,13 @@
 {
   "identifier": "desktop-capability",
-  "platforms": ["macOS", "windows", "linux"],
-  "windows": ["main"],
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:window:allow-destroy",
     "updater:default",
@@ -13,13 +19,32 @@
     {
       "identifier": "opener:default",
       "allow": [
-        { "app": "firefox", "url": "http://*" },
-        { "app": "firefox", "url": "https://*" },
-        { "app": "msedge", "url": "http://*" },
-        { "app": "msedge", "url": "https://*" },
-        { "app": "chrome", "url": "http://*" },
-        { "app": "chrome", "url": "https://*" }
+        {
+          "app": "firefox",
+          "url": "http://*"
+        },
+        {
+          "app": "firefox",
+          "url": "https://*"
+        },
+        {
+          "app": "msedge",
+          "url": "http://*"
+        },
+        {
+          "app": "msedge",
+          "url": "https://*"
+        },
+        {
+          "app": "chrome",
+          "url": "http://*"
+        },
+        {
+          "app": "chrome",
+          "url": "https://*"
+        }
       ]
-    }
+    },
+    "global-shortcut:default"
   ]
 }
