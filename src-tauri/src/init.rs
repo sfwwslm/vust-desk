@@ -43,6 +43,7 @@ pub fn setup(app: &mut tauri::App) {
                         {
                             let is_visible = window.is_visible().unwrap();
                             let is_minimized = window.is_minimized().unwrap();
+                            let is_focused = window.is_focused().unwrap();
 
                             if !is_visible {
                                 // 窗口是隐藏的 → 显示并聚焦
@@ -54,8 +55,13 @@ pub fn setup(app: &mut tauri::App) {
                                 window.unminimize().unwrap();
                                 window.set_focus().unwrap();
                             } else {
-                                // 窗口正常显示 → 隐藏
-                                window.hide().unwrap();
+                                // 窗口不是隐藏或最小化 → 聚焦
+                                if !is_focused {
+                                    window.set_focus().unwrap();
+                                } else {
+                                    // 窗口是聚焦时 → 最小化
+                                    window.minimize().unwrap();
+                                }
                             }
                         };
                     })
