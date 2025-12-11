@@ -11,7 +11,8 @@ export const DashboardContainer = styled.main<{ theme: Theme }>`
   /* 让容器成为 flex 纵向布局，并撑满最小高度 */
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%; /* 占满可用空间，避免外层出现滚动条 */
+  min-height: 0; /* 允许内部可滚动区域正确收缩 */
 `;
 
 // --- Summary Section ---
@@ -47,6 +48,7 @@ export const TableSection = styled.section<{ theme: Theme }>`
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-height: 0; /* 让内部列表区域能使用剩余空间滚动 */
 `;
 
 export const TableHeader = styled.div`
@@ -108,6 +110,7 @@ export const TableWrapper = styled.div<{ theme: Theme }>`
   flex-grow: 1;
   display: flex; /* 让内部元素（table 或提示信息）可以撑满 */
   flex-direction: column;
+  min-height: 0; /* 防止内部内容撑开导致父级溢出 */
 `;
 
 export const StyledTable = styled.table`
@@ -247,8 +250,36 @@ export const NoResultsMessage = styled.div<{ theme: Theme }>`
   align-items: center;
 `;
 
-export const LoadMoreContainer = styled.div`
-  text-align: center;
+export const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
   margin-top: 1.5rem;
-  flex-shrink: 0; /* 防止加载更多按钮被压缩 */
+  flex-shrink: 0;
+`;
+
+export const PageButton = styled.button<{ theme: Theme }>`
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid ${(props) => props.theme.colors.border};
+  background-color: ${(props) => props.theme.colors.surface};
+  color: ${(props) => props.theme.colors.textPrimary};
+  min-width: 2.5rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover:enabled {
+    background-color: ${(props) => props.theme.colors.primaryFocus};
+    color: ${(props) => props.theme.colors.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const PageInfo = styled.span<{ theme: Theme }>`
+  color: ${(props) => props.theme.colors.textSecondary};
+  font-size: 0.9rem;
 `;

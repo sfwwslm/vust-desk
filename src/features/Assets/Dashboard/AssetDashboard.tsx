@@ -28,7 +28,9 @@ import {
   DeleteButton,
   ActionCell,
   NoResultsMessage,
-  LoadMoreContainer,
+  PaginationContainer,
+  PageButton,
+  PageInfo,
 } from "./Dashboard.styles";
 import { useAuth } from "@/contexts/AuthContext";
 import * as log from "@tauri-apps/plugin-log";
@@ -51,7 +53,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     key: keyof Asset;
     order: "asc" | "desc";
   }>({ key: "purchase_date", order: "desc" });
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -155,6 +157,33 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     }));
   };
 
+  useEffect(() => {
+    // 搜索或数据变化时回到第一页，避免页码超出范围
+    setCurrentPage(1);
+  }, [searchTerm, assets.length]);
+
+  useEffect(() => {
+    // 当总页数变小且当前页超出时，自动回退到最后一页
+    const total = Math.max(
+      1,
+      Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE)
+    );
+    if (currentPage > total) {
+      setCurrentPage(total);
+    }
+  }, [sortedAndFilteredAssets.length, currentPage]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE)
+  );
+
+  const paginatedAssets = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return sortedAndFilteredAssets.slice(start, end);
+  }, [sortedAndFilteredAssets, currentPage]);
+
   const handleAdd = () => {
     setEditingAsset(null);
     setIsFormModalOpen(true);
@@ -187,10 +216,6 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     await assetDb.saveAsset(submittedAsset);
     setIsFormModalOpen(false);
     loadAssets();
-  };
-
-  const handleLoadMore = () => {
-    setVisibleCount((prevCount) => prevCount + ITEMS_PER_PAGE);
   };
 
   const handleCategoryModalClose = (refreshNeeded?: boolean) => {
@@ -305,49 +330,45 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                   </tr>
                 </thead>
                 <TableBody>
-                  {sortedAndFilteredAssets
-                    .slice(0, visibleCount)
-                    .map((asset) => (
-                      <TableRow
-                        key={asset.uuid}
-                        theme={theme}
-                        className="asset-row"
-                      >
-                        <TableCell className="font-medium text-slate-900">
-                          {asset.name}
-                        </TableCell>
-                        <TableCell className="text-slate-900">
-                          {asset.brand || t("common.none")}
-                        </TableCell>
-                        <TableCell>
-                          {asset.category_is_default === 1
-                            ? t("management.asset.category.defaultCategory")
-                            : asset.category_name || t("common.none")}
-                        </TableCell>
-                        <TableCell>
-                          ¥ {asset.price.toLocaleString("zh-CN")}
-                        </TableCell>
-                        <TableCell>{asset.purchase_date}</TableCell>
-                        <ActionCell>
-                          <Tooltip text={t("common.edit")}>
-                            <EditButton
-                              theme={theme}
-                              onClick={() => handleEdit(asset)}
-                            >
-                              <IoPencil />
-                            </EditButton>
-                          </Tooltip>
-                          <Tooltip text={t("common.delete")}>
-                            <DeleteButton
-                              theme={theme}
-                              onClick={() => handleDelete(asset)}
-                            >
-                              <IoTrash />
-                            </DeleteButton>
-                          </Tooltip>
-                        </ActionCell>
-                      </TableRow>
-                    ))}
+                  {paginatedAssets.map((asset) => (
+                    <TableRow
+                      key={asset.uuid}
+                      theme={theme}
+                      className="asset-row"
+                    >
+                      <TableCell className="font-medium text-slate-900">
+                        {asset.name}
+                      </TableCell>
+                      <TableCell className="text-slate-900">
+                        {asset.brand || t("common.none")}
+                      </TableCell>
+                      <TableCell>
+                        {asset.category_is_default === 1
+                          ? t("management.asset.category.defaultCategory")
+                          : asset.category_name || t("common.none")}
+                      </TableCell>
+                      <TableCell>￥ {asset.price.toLocaleString("zh-CN")}</TableCell>
+                      <TableCell>{asset.purchase_date}</TableCell>
+                      <ActionCell>
+                        <Tooltip text={t("common.edit")}>
+                          <EditButton
+                            theme={theme}
+                            onClick={() => handleEdit(asset)}
+                          >
+                            <IoPencil />
+                          </EditButton>
+                        </Tooltip>
+                        <Tooltip text={t("common.delete")}>
+                          <DeleteButton
+                            theme={theme}
+                            onClick={() => handleDelete(asset)}
+                          >
+                            <IoTrash />
+                          </DeleteButton>
+                        </Tooltip>
+                      </ActionCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </StyledTable>
             ) : (
@@ -363,12 +384,28 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
               )
             )}
           </TableWrapper>
-          {visibleCount < sortedAndFilteredAssets.length && (
-            <LoadMoreContainer>
-              <ActionButton onClick={handleLoadMore} theme={theme}>
-                {t("common.loadMore")}
-              </ActionButton>
-            </LoadMoreContainer>
+          {sortedAndFilteredAssets.length > 0 && (
+            <PaginationContainer>
+              <PageButton
+                theme={theme}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                {t("common.prevPage")}
+              </PageButton>
+              <PageInfo theme={theme}>
+                {currentPage} / {totalPages}
+              </PageInfo>
+              <PageButton
+                theme={theme}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage >= totalPages}
+              >
+                {t("common.nextPage")}
+              </PageButton>
+            </PaginationContainer>
           )}
         </TableSection>
       </DashboardContainer>
@@ -394,3 +431,6 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 };
 
 export default AssetDashboard;
+
+
+

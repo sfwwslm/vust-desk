@@ -74,7 +74,9 @@
     "uploadFailed": "Upload Failed",
     "invalidOperation": "Invalid Operation",
     "confirmAction": "Confirm Action",
-    "none": "None"
+    "none": "None",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   },
   "panel": {
     "title": "Panel",

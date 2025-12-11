@@ -71,11 +71,13 @@
     "confirmDeletion": "确认删除",
     "saveFailed": "保存失败",
     "operationFailed": "操作失败",
-    "uploadFailed": "上传失败",
-    "invalidOperation": "操作无效",
-    "confirmAction": "确认操作",
-    "none": "无"
-  },
+      "uploadFailed": "上传失败",
+      "invalidOperation": "操作无效",
+      "confirmAction": "确认操作",
+      "none": "无",
+      "prevPage": "上一页",
+      "nextPage": "下一页"
+    },
   "panel": {
     "title": "导航",
     "searchText": "搜索站点或使用搜索引擎...",

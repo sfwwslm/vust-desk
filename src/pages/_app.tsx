@@ -51,6 +51,7 @@ const AppMain = styled.main`
   flex: 1;
   overflow: auto;
   margin: 0;
+  min-height: 0; /* 允许内部可滚动区域占满空间而不撑开容器 */
 `;
 
 const AppLayout: React.FC = () => {
