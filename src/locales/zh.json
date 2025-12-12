@@ -301,6 +301,7 @@
   "sync": {
     "preparingSync": "正在准备同步...",
     "verifyingUser": "正在验证用户信息...",
+    "verifyingServer": "正在验证服务器版本...",
     "collectingLocalData": "正在收集本地数据...",
     "startingSession": "正在开启同步会话...",
     "sendingChunk": "正在发送 {{type}} 数据 (分块 {{current}}/{{total}})...",
@@ -311,6 +312,7 @@
     "downloadingIcons": "正在下载 {{num}} 个图标...",
     "syncSuccess": "同步成功！",
     "syncFailed": "同步失败: {{error}}",
-    "serverUserUpdated": "服务端用户信息发生变更，已更新本地用户信息！"
+    "serverUserUpdated": "服务端用户信息发生变更，已更新本地用户信息！",
+    "serverTooOld": "服务器版本过低（当前 {{version}}，至少 {{required}}），请升级服务端。"
   }
 }

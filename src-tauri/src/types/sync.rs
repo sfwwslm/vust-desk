@@ -115,6 +115,14 @@ pub struct ClientInfoDto {
     pub server_address: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VersionInfo {
+    pub version: String,
+    pub commit_hash: String,
+    pub build_time: String,
+    pub build_env: String,
+}
+
 /// `sync/start` 接口的请求体
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientSyncPayload {

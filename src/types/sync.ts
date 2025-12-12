@@ -14,7 +14,14 @@ export interface ApiResponse<T> {
   success: boolean;
   code: number;
   message: string;
-  data?: T | null; // Option<T> 映射为 T | null，并且字段可选
+ data?: T | null; // Option<T> 映射为 T | null，并且字段可选
+}
+
+export interface VersionInfo {
+  version: string;
+  commit_hash: string;
+  build_time: string;
+  build_env: string;
 }
 
 /**

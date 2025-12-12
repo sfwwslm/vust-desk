@@ -44,6 +44,7 @@ pub fn run() {
             invokes::bookmark_parser::bookmark_parser,
             invokes::sync::check_token_and_user,
             invokes::sync::check_client_version,
+            invokes::sync::check_server_version,
             invokes::sync::sync_start,
             invokes::sync::sync_chunk,
             invokes::sync::sync_complete,

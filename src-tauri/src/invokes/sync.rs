@@ -3,7 +3,7 @@ use crate::types::{
     session::{CurrentUserPayload, User},
     sync::{
         ClientInfoDto, ClientSyncDataChunk, ClientSyncPayload, ApiResponse, ServerSyncData,
-        StartSyncResponse,
+        StartSyncResponse, VersionInfo,
     },
 };
 
@@ -56,6 +56,25 @@ pub async fn check_client_version(
             log::error!("版本兼容性检查时请求失败: {}", e);
             Err("版本兼容性检查时请求失败".to_string())
         }
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn check_server_version(
+    http_client: State<'_, Client>,
+    server_address: String,
+) -> Result<ApiResponse<VersionInfo>, String> {
+    log::info!("正在检查服务器版本兼容性...");
+    let url = format!("{}/api/version", server_address);
+
+    let response = http_client.get(url).send().await;
+
+    match response {
+        Ok(res) => res
+            .json::<ApiResponse<VersionInfo>>()
+            .await
+            .map_err(|e| format!("解析服务器版本失败: {e}")),
+        Err(e) => Err(format!("请求服务器版本失败: {e}")),
     }
 }
 

@@ -28,6 +28,7 @@ import {
   DataType,
   ClientSyncDataChunk,
   ClientInfoDto,
+  VersionInfo,
 } from "@/types/sync";
 import {
   isPermissionGranted,
@@ -36,6 +37,16 @@ import {
 import { getVersion } from "@tauri-apps/api/app";
 
 const CHUNK_SIZE = 100; // 每块传输 100 条记录
+const MIN_SERVER_VERSION = "0.0.3";
+
+const isVersionGte = (version: string, minimum: string): boolean => {
+  const parse = (v: string) => v.split(".").map((n) => parseInt(n, 10) || 0);
+  const [a1, a2, a3] = parse(version);
+  const [b1, b2, b3] = parse(minimum);
+  if (a1 !== b1) return a1 > b1;
+  if (a2 !== b2) return a2 > b2;
+  return a3 >= b3;
+};
 
 /**
  * @function processServerData
@@ -297,25 +308,44 @@ const runSyncPrerequisites = async (
     );
 
     // 验证用户 Token
-    const clientInfoDto: ClientInfoDto = {
-      app_version: await getVersion(),
-      username: user.username,
-      token: user.token || "",
-      server_address: user.serverAddress || "",
-    };
+  const clientInfoDto: ClientInfoDto = {
+    app_version: await getVersion(),
+    username: user.username,
+    token: user.token || "",
+    server_address: user.serverAddress || "",
+  };
 
     /// 校验 Token 和 用户名是否发送变更
     await invoke("check_token_and_user", {
       client_info: clientInfoDto,
     });
 
-    /// 校验版本兼容性
-    await invoke("check_client_version", {
-      client_info: clientInfoDto,
-    });
+  /// 校验版本兼容性
+  await invoke("check_client_version", {
+    client_info: clientInfoDto,
+  });
 
-    // 添加兼容性验证等
-  } finally {
+  // 校验服务器版本
+  setSyncMessage(t("sync.verifyingServer"));
+  if (!user.serverAddress) {
+    throw new Error("服务器地址未配置，无法校验版本");
+  }
+  const serverVersionResp: ApiResponse<VersionInfo> = await invoke(
+    "check_server_version",
+    { server_address: user.serverAddress }
+  );
+  const serverVersion = serverVersionResp.data?.version;
+  if (!serverVersion || !isVersionGte(serverVersion, MIN_SERVER_VERSION)) {
+    throw new Error(
+      t("sync.serverTooOld", {
+        version: serverVersion || "unknown",
+        required: MIN_SERVER_VERSION,
+      })
+    );
+  }
+
+  // 添加兼容性验证等
+} finally {
     // 清理监听器
     if (unlisten) {
       unlisten();

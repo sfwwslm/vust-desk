@@ -301,6 +301,7 @@
   "sync": {
     "preparingSync": "Preparing sync...",
     "verifyingUser": "Verifying user information...",
+    "verifyingServer": "Checking server version...",
     "collectingLocalData": "Collecting local data...",
     "startingSession": "Starting sync session...",
     "sendingChunk": "Sending {{type}} data (chunk {{current}}/{{total}})...",
@@ -311,6 +312,7 @@
     "downloadingIcons": "Downloading {{num}} icons...",
     "syncSuccess": "Sync successful!",
     "syncFailed": "Sync failed: {{error}}",
-    "serverUserUpdated": "Server user information has changed, local user information has been updated!"
+    "serverUserUpdated": "Server user information has changed, local user information has been updated!",
+    "serverTooOld": "Server version too low (current {{version}}, require >= {{required}}). Please upgrade the server."
   }
 }
