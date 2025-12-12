@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +6,10 @@ import { ANONYMOUS_USER_UUID } from "@/services/user";
 import CustomSelect, {
   SelectOption,
 } from "@/components/common/CustomSelect/CustomSelect";
-import { Label as BaseLabel } from "@/components/styled/StyledForm";
+import {
+  Label as BaseLabel,
+  Input as BaseInput,
+} from "@/components/styled/StyledForm";
 import { StyledButton } from "@/components/styled/StyledButton";
 import DataClaim from "./DataClaim";
 import LoginModal from "./LoginModal";
@@ -50,6 +53,44 @@ const AuthActionsContainer = styled(SettingsBlock)`
   flex-wrap: wrap; /* 允许在空间不足时换行 */
 `;
 
+const ServerAddressBlock = styled(SettingsBlock)`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const ServerInputRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+`;
+
+const Input = styled(BaseInput)`
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+`;
+
+const HelperText = styled.p`
+  margin: 0;
+  color: ${(props) => props.theme.colors.textSecondary};
+  font-size: 0.9rem;
+`;
+
+const UpdateButton = styled(StyledButton)`
+  white-space: nowrap;
+`;
+
+const FeedbackMessage = styled.p<{ $type: "error" | "success" }>`
+  margin: 0;
+  color: ${(props) =>
+    props.$type === "error"
+      ? props.theme.colors.error
+      : props.theme.colors.success};
+  font-size: 0.9rem;
+`;
+
 const AuthSettings: React.FC = () => {
   const { t } = useTranslation();
   const {
@@ -60,10 +101,15 @@ const AuthSettings: React.FC = () => {
     availableUsers,
     incrementDataVersion,
     refreshAvailableUsers,
+    updateServerAddress,
   } = useAuth();
   const { openModal } = useModal();
   const { isSyncing, setIsSyncing, setSyncMessage, setSyncCompleted } =
     useSync(); // 从 context 获取状态和方法
+  const [serverAddress, setServerAddress] = useState("");
+  const [serverAddressError, setServerAddressError] = useState("");
+  const [serverAddressUpdated, setServerAddressUpdated] = useState(false);
+  const [isUpdatingServer, setIsUpdatingServer] = useState(false);
 
   const handleUserSwitch = (uuid: string | number) => {
     const selectedUser = availableUsers.find((u) => u.uuid === uuid);
@@ -93,6 +139,43 @@ const AuthSettings: React.FC = () => {
     label: `${user.username} (uid: ${user.uuid.substring(0, 5)})`,
   }));
 
+  const canEditServerAddress =
+    isLoggedIn && activeUser?.uuid !== ANONYMOUS_USER_UUID;
+
+  useEffect(() => {
+    setServerAddress(activeUser?.serverAddress || "");
+    setServerAddressError("");
+    setServerAddressUpdated(false);
+  }, [activeUser]);
+
+  const hasServerChanged = useMemo(() => {
+    const trimmed = serverAddress.trim();
+    const origin = activeUser?.serverAddress?.trim() || "";
+    return trimmed !== origin;
+  }, [activeUser?.serverAddress, serverAddress]);
+
+  const handleServerAddressUpdate = async () => {
+    if (!canEditServerAddress) return;
+    const trimmed = serverAddress.trim();
+    setServerAddressError("");
+    setServerAddressUpdated(false);
+    if (!/^https?:\/\//i.test(trimmed)) {
+      setServerAddressError(t("account.serverAddressInvalid"));
+      return;
+    }
+    setIsUpdatingServer(true);
+    try {
+      await updateServerAddress(trimmed);
+      setServerAddressUpdated(true);
+    } catch (error: any) {
+      setServerAddressError(
+        error?.message || t("account.unknownError") || "Update failed"
+      );
+    } finally {
+      setIsUpdatingServer(false);
+    }
+  };
+
   return (
     <>
       <AuthContainer className="auth-settings-container">
@@ -114,6 +197,39 @@ const AuthSettings: React.FC = () => {
             )}
           </UserSwitcherContainer>
         </SettingsBlock>
+
+        {canEditServerAddress && (
+          <ServerAddressBlock className="server-address-block">
+            <Label>{t("account.serverAddressLabel")}</Label>
+            <ServerInputRow>
+              <Input
+                value={serverAddress}
+                placeholder={t("account.serverAddressPlaceholder")}
+                onChange={(e) => setServerAddress(e.target.value)}
+              />
+              <UpdateButton
+                variant="secondary"
+                disabled={!hasServerChanged || isUpdatingServer}
+                onClick={handleServerAddressUpdate}
+              >
+                {isUpdatingServer
+                  ? t("account.serverAddressSaving")
+                  : t("account.updateServerAddress")}
+              </UpdateButton>
+            </ServerInputRow>
+            {serverAddressError && (
+              <FeedbackMessage $type="error">
+                {serverAddressError}
+              </FeedbackMessage>
+            )}
+            {!serverAddressError && serverAddressUpdated && (
+              <FeedbackMessage $type="success">
+                {t("account.serverAddressUpdated")}
+              </FeedbackMessage>
+            )}
+            <HelperText>{t("account.serverAddressHint")}</HelperText>
+          </ServerAddressBlock>
+        )}
 
         {/* 操作区块 */}
         <AuthActionsContainer>

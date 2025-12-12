@@ -270,7 +270,14 @@
       "current": "Current",
       "switch": "Switch",
       "addAccount": "Login to Another Account"
-    }
+    },
+    "serverAddressLabel": "Server address",
+    "serverAddressPlaceholder": "e.g., https://example.com:9991",
+    "serverAddressHint": "Will be used for sync and all server requests after saving.",
+    "updateServerAddress": "Update",
+    "serverAddressUpdated": "Server address updated.",
+    "serverAddressInvalid": "Please enter a full address with http/https prefix.",
+    "serverAddressSaving": "Saving..."
   },
   "sync": {
     "preparingSync": "Preparing sync...",

@@ -97,6 +97,23 @@ export async function setUserLoginStatus(
 }
 
 /**
+ * @function updateUserServerAddress
+ * @description 更新指定用户的服务器地址。
+ * @param {string} uuid - 用户的 UUID。
+ * @param {string} serverAddress - 完整的服务器地址（包含协议）。
+ */
+export async function updateUserServerAddress(
+  uuid: string,
+  serverAddress: string
+): Promise<void> {
+  await dbClient.execute(
+    "UPDATE users SET server_address = $1 WHERE uuid = $2",
+    [serverAddress, uuid]
+  );
+  log.info(`用户 ${uuid} 的服务器地址已更新为 ${serverAddress}`);
+}
+
+/**
  * @function getAllUsers
  * @description 获取所有登录状态的用户，用于切换的用户。
  * @description 注意字段的重命名

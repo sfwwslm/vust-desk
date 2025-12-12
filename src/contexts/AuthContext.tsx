@@ -15,6 +15,7 @@ import {
   ANONYMOUS_USER,
   setUserLoginStatus,
   getAllUsers,
+  updateUserServerAddress,
 } from "@/services/user";
 import { apiClientWrapper } from "@/services/apiClient";
 import { ApiError, HttpError } from "@/services/errors";
@@ -146,6 +147,12 @@ interface AuthContextType {
    * @description 强制刷新可用的用户列表。
    */
   refreshAvailableUsers: () => Promise<User[]>;
+
+  /**
+   * @function updateServerAddress
+   * @description 更新当前激活用户的服务器地址。
+   */
+  updateServerAddress: (serverAddress: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -283,6 +290,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeUser, logoutUser]);
 
+  const updateServerAddress = useCallback(
+    async (serverAddress: string) => {
+      if (!activeUser) {
+        return;
+      }
+      const trimmedAddress = serverAddress.trim();
+      await updateUserServerAddress(activeUser.uuid, trimmedAddress);
+      setActiveUser((prev) =>
+        prev && prev.uuid === activeUser.uuid
+          ? { ...prev, serverAddress: trimmedAddress }
+          : prev
+      );
+      setAvailableUsers((prev) =>
+        prev.map((user) =>
+          user.uuid === activeUser.uuid
+            ? { ...user, serverAddress: trimmedAddress }
+            : user
+        )
+      );
+      log.info(
+        `用户 ${activeUser.username} (${activeUser.uuid}) 的服务器地址已更新。`
+      );
+    },
+    [activeUser, setActiveUser, setAvailableUsers]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -298,6 +331,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setDataOperationInProgress,
         incrementDataVersion,
         refreshAvailableUsers,
+        updateServerAddress,
       }}
     >
       {children}

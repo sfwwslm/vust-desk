@@ -270,7 +270,14 @@
       "current": "当前登录",
       "switch": "切换",
       "addAccount": "登录其它账户"
-    }
+    },
+    "serverAddressLabel": "服务器地址",
+    "serverAddressPlaceholder": "例如：https://example.com:9991",
+    "serverAddressHint": "修改后将应用于同步、图标等所有服务请求。",
+    "updateServerAddress": "更新",
+    "serverAddressUpdated": "服务器地址已更新。",
+    "serverAddressInvalid": "请输入包含 http/https 前缀的完整服务器地址。",
+    "serverAddressSaving": "保存中..."
   },
   "sync": {
     "preparingSync": "正在准备同步...",
