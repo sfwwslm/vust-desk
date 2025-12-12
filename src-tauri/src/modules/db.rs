@@ -87,6 +87,12 @@ fn all_migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
             sql: include_str!("../../migrations/0007_create_search_engines.sql"),
         },
+        Migration {
+            version: 8,
+            description: "add_asset_sale_fields",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0008_assets_sale_fields.sql"),
+        },
     ]
 }
 

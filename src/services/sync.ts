@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { dbClient } from "./db";
 import { User, updateUsername } from "./user";
+import { ensureSaleColumns } from "./assetDb";
 import {
   WEBSITE_GROUPS_TABLE_NAME,
   WEBSITES_TABLE_NAME,
@@ -44,6 +45,7 @@ const CHUNK_SIZE = 100; // 每块传输 100 条记录
  */
 const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
   log.info("✔️ 数据处理流程启动...");
+  await ensureSaleColumns();
 
   // =================================================================
   // 阶段一：特殊处理资产分类的默认值冲突
@@ -412,7 +414,10 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       { type: DataType.WebsiteGroups, query: `SELECT uuid, name, description, sort_order, is_deleted, updated_at FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1` },
       { type: DataType.Websites, query: `SELECT uuid, group_uuid, title, url, url_lan, default_icon, local_icon_path, background_color, description, sort_order, is_deleted, updated_at FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1` },
       { type: DataType.AssetCategories, query: `SELECT uuid, name, is_default, is_deleted, updated_at FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1` },
-      { type: DataType.Assets, query: `SELECT uuid, category_uuid, name, purchase_date, price, expiration_date, description, is_deleted, updated_at, brand, model, serial_number FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1` },
+      {
+        type: DataType.Assets,
+        query: `SELECT uuid, category_uuid, name, purchase_date, price, expiration_date, description, is_deleted, updated_at, brand, model, serial_number, status, sale_price, sale_date, fees, buyer, notes, realized_profit FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1`,
+      },
       { type: DataType.SearchEngines, query: `SELECT uuid, name, url_template, default_icon, local_icon_path, is_default, sort_order, updated_at FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1` },
     ];
 

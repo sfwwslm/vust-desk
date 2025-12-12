@@ -92,6 +92,34 @@ export interface Asset {
    */
   description?: string;
   /**
+   * 持有状态：holding（持有中）/ sold（已卖出）/ archived 等扩展值。
+   */
+  status: string;
+  /**
+   * 卖出价格，可选。
+   */
+  sale_price?: number | null;
+  /**
+   * 卖出日期，可选。
+   */
+  sale_date?: string | null;
+  /**
+   * 卖出产生的费用，可选。
+   */
+  fees?: number | null;
+  /**
+   * 买家信息备注。
+   */
+  buyer?: string | null;
+  /**
+   * 卖出备注。
+   */
+  notes?: string | null;
+  /**
+   * 已实现收益（卖出价 - 成本 - 费用）。
+   */
+  realized_profit?: number | null;
+  /**
    * 软删除标志。
    * 0 表示未删除，1 表示已删除。
    */

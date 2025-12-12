@@ -3,6 +3,27 @@ import { Asset, AssetCategory } from "@/features/Assets/types";
 import { ANONYMOUS_USER_UUID } from "@/services/user";
 import { ASSET_TABLE_NAME, ASSET_CATEGORIES_TABLE_NAME } from "@/constants";
 
+export async function ensureSaleColumns(): Promise<void> {
+  const columns = await dbClient.select<{ name: string }>(
+    `PRAGMA table_info(${ASSET_TABLE_NAME})`
+  );
+  const columnNames = columns.map((col) => col.name);
+
+  const addColumnIfMissing = async (name: string, ddl: string) => {
+    if (!columnNames.includes(name)) {
+      await dbClient.execute(`ALTER TABLE ${ASSET_TABLE_NAME} ADD COLUMN ${ddl}`);
+    }
+  };
+
+  await addColumnIfMissing("status", "status TEXT NOT NULL DEFAULT 'holding'");
+  await addColumnIfMissing("sale_price", "sale_price REAL");
+  await addColumnIfMissing("sale_date", "sale_date TEXT");
+  await addColumnIfMissing("fees", "fees REAL DEFAULT 0");
+  await addColumnIfMissing("buyer", "buyer TEXT");
+  await addColumnIfMissing("notes", "notes TEXT");
+  await addColumnIfMissing("realized_profit", "realized_profit REAL");
+}
+
 /**
  * @function getDefaultCategory
  * @description 获取用户的默认资产分类。
@@ -30,6 +51,7 @@ export async function getDefaultCategory(
  * @returns {Promise<Asset[]>}
  */
 export async function getAssetsData(activeUuid: string): Promise<Asset[]> {
+  await ensureSaleColumns();
   const assets = dbClient.select<Asset>(
     `
     SELECT
@@ -65,9 +87,10 @@ export async function assetExists(uuid: string): Promise<boolean> {
  * @param {Partial<Asset>} asset - 包含资产数据的对象。
  */
 export async function saveAsset(asset: Partial<Asset>): Promise<void> {
+  await ensureSaleColumns();
   if (asset.uuid && (await assetExists(asset.uuid))) {
     // 更新操作
-    const updateQuery = `UPDATE ${ASSET_TABLE_NAME} SET name = $1, purchase_date = $2, price = $3, category_uuid = $4, expiration_date = $5, description = $6, user_uuid = $7, brand = $8, model = $9, serial_number = $10 WHERE uuid = $11`;
+    const updateQuery = `UPDATE ${ASSET_TABLE_NAME} SET name = $1, purchase_date = $2, price = $3, category_uuid = $4, expiration_date = $5, description = $6, user_uuid = $7, brand = $8, model = $9, serial_number = $10, status = $11, sale_price = $12, sale_date = $13, fees = $14, buyer = $15, notes = $16, realized_profit = $17 WHERE uuid = $18`;
     await dbClient.execute(updateQuery, [
       asset.name,
       asset.purchase_date,
@@ -79,11 +102,18 @@ export async function saveAsset(asset: Partial<Asset>): Promise<void> {
       asset.brand || null,
       asset.model || null,
       asset.serial_number || null,
+      asset.status || "holding",
+      asset.sale_price ?? null,
+      asset.sale_date || null,
+      asset.fees ?? null,
+      asset.buyer || null,
+      asset.notes || null,
+      asset.realized_profit ?? null,
       asset.uuid,
     ]);
   } else {
     // 新增操作
-    const insertQuery = `INSERT INTO ${ASSET_TABLE_NAME} (uuid, user_uuid, name, purchase_date, price, category_uuid, expiration_date, description, brand, model, serial_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`;
+    const insertQuery = `INSERT INTO ${ASSET_TABLE_NAME} (uuid, user_uuid, name, purchase_date, price, category_uuid, expiration_date, description, brand, model, serial_number, status, sale_price, sale_date, fees, buyer, notes, realized_profit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`;
     await dbClient.execute(insertQuery, [
       crypto.randomUUID(),
       asset.user_uuid,
@@ -96,6 +126,13 @@ export async function saveAsset(asset: Partial<Asset>): Promise<void> {
       asset.brand || null,
       asset.model || null,
       asset.serial_number || null,
+      asset.status || "holding",
+      asset.sale_price ?? null,
+      asset.sale_date || null,
+      asset.fees ?? null,
+      asset.buyer || null,
+      asset.notes || null,
+      asset.realized_profit ?? null,
     ]);
   }
 }

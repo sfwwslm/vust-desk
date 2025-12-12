@@ -24,9 +24,11 @@ interface AssetFormProps {
   onSubmit: (asset: Partial<Asset>) => void;
 }
 
-// 允许在表单状态中，price 临时为字符串
-type FormAssetState = Partial<Omit<Asset, "price">> & {
+// 允许在表单状态中，price/sale_price/fees 临时为字符串
+type FormAssetState = Partial<Omit<Asset, "price" | "sale_price" | "fees">> & {
   price?: number | string;
+  sale_price?: number | string | null;
+  fees?: number | string | null;
 };
 
 /**
@@ -40,6 +42,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const { activeUser } = useAuth();
+  const [markAsSold, setMarkAsSold] = useState(false);
 
   // 加载分类数据
   useEffect(() => {
@@ -59,7 +62,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
     if (!isLoadingCategories) {
       if (initialData) {
         // 编辑模式：使用传入的完整数据
-        setAsset(initialData);
+        setAsset({
+          ...initialData,
+          status: initialData.status || "holding",
+        });
+        setMarkAsSold(initialData.status === "sold");
       } else {
         // 新增模式：设置表单字段的默认值
         setAsset({
@@ -69,7 +76,15 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
           category_uuid: categories.length > 0 ? categories[0].uuid : "", // 默认选中第一个分类
           expiration_date: getDateTenYearsLaterFormatted(),
           description: "",
+          status: "holding",
+          sale_price: null,
+          sale_date: null,
+          fees: 0,
+          buyer: "",
+          notes: "",
+          realized_profit: null,
         });
+        setMarkAsSold(false);
       }
     }
     // 每次重新初始化时清空错误
@@ -108,6 +123,23 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
     }
   };
 
+  useEffect(() => {
+    setAsset((prev) => ({
+      ...prev,
+      status: markAsSold ? "sold" : "holding",
+      sale_date: markAsSold
+        ? prev.sale_date || getCurrentDateFormatted()
+        : null,
+      sale_price: markAsSold
+        ? prev.sale_price ?? prev.price ?? ""
+        : null,
+      fees: markAsSold ? prev.fees ?? 0 : 0,
+      buyer: markAsSold ? prev.buyer || "" : "",
+      notes: markAsSold ? prev.notes || "" : "",
+      realized_profit: markAsSold ? prev.realized_profit ?? null : null,
+    }));
+  }, [markAsSold]);
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -133,6 +165,15 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
       newErrors.price = "价格必须是有效数字且大于等于0。";
     }
 
+    const salePriceValue =
+      asset.sale_price === null || asset.sale_price === undefined
+        ? undefined
+        : parseFloat(String(asset.sale_price));
+    const feesValue =
+      asset.fees === null || asset.fees === undefined
+        ? 0
+        : parseFloat(String(asset.fees));
+
     if (!asset.category_uuid) {
       newErrors.category_uuid = "请选择资产分类。";
     }
@@ -145,6 +186,27 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
       newErrors.expirationDate = "过期日期不能早于购买日期。";
     }
 
+    if (markAsSold) {
+      if (
+        salePriceValue === undefined ||
+        isNaN(salePriceValue) ||
+        salePriceValue < 0
+      ) {
+        newErrors.sale_price = "卖出价格必须是有效数字且大于等于0。";
+      }
+      if (!asset.sale_date) {
+        newErrors.sale_date = "卖出日期不能为空。";
+      } else if (
+        asset.purchase_date &&
+        isBefore(parseISO(asset.sale_date), parseISO(asset.purchase_date))
+      ) {
+        newErrors.sale_date = "卖出日期不能早于购买日期。";
+      }
+      if (isNaN(feesValue) || feesValue < 0) {
+        newErrors.fees = "费用不能为负数。";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -153,9 +215,30 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
     e.preventDefault();
     if (validateForm()) {
       // 在提交前，将 price 字段转换为数字
+      const priceValue = parseFloat(String(asset.price)) || 0;
+      const salePriceValue =
+        asset.sale_price === undefined || asset.sale_price === null
+          ? null
+          : parseFloat(String(asset.sale_price));
+      const feesValue =
+        asset.fees === undefined || asset.fees === null
+          ? 0
+          : parseFloat(String(asset.fees));
+
+      const isSold = markAsSold;
       const dataToSubmit: Partial<Asset> = {
         ...asset,
-        price: parseFloat(String(asset.price)) || 0,
+        status: isSold ? "sold" : "holding",
+        price: priceValue,
+        sale_price: isSold ? salePriceValue : null,
+        sale_date: isSold ? asset.sale_date || null : null,
+        fees: isSold ? feesValue : 0,
+        buyer: isSold ? asset.buyer || "" : "",
+        notes: isSold ? asset.notes || "" : "",
+        realized_profit:
+          isSold && salePriceValue !== null && salePriceValue !== undefined
+            ? salePriceValue - priceValue - (feesValue || 0)
+            : null,
       };
       onSubmit(dataToSubmit);
     }
@@ -230,17 +313,17 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
           value={asset.purchase_date || ""}
           onChange={handleChange}
           required
-        />
-        {errors.purchaseDate && (
-          <ErrorMessage>{errors.purchaseDate}</ErrorMessage>
-        )}
-      </FormGroup>
+      />
+      {errors.purchaseDate && (
+        <ErrorMessage>{errors.purchaseDate}</ErrorMessage>
+      )}
+    </FormGroup>
 
-      <FormGroup>
-        <Label htmlFor="brand">{t("management.asset.brandOptional")}</Label>
-        <Input
-          type="text"
-          id="brand"
+    <FormGroup>
+      <Label htmlFor="brand">{t("management.asset.brandOptional")}</Label>
+      <Input
+        type="text"
+        id="brand"
           name="brand"
           value={asset.brand || ""}
           onChange={handleChange}
@@ -264,6 +347,103 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
         )}
       </FormGroup>
 
+      <FormGroup>
+        <Label htmlFor="mark_sold">{t("management.asset.sellStatusLabel")}</Label>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          <input
+          id="mark_sold"
+          type="checkbox"
+          checked={markAsSold}
+          onChange={(e) => setMarkAsSold(e.target.checked)}
+        />
+        <span>
+          {markAsSold
+            ? t("management.asset.markedSold")
+            : t("management.asset.markSold")}
+        </span>
+      </div>
+    </FormGroup>
+
+    {markAsSold && (
+      <>
+        <FormGroup>
+          <Label htmlFor="sale_price">
+            {t("management.asset.salePrice")}
+          </Label>
+          <Input
+            type="number"
+            step="any"
+            id="sale_price"
+            name="sale_price"
+            value={asset.sale_price ?? ""}
+            onChange={handleChange}
+            min="0"
+            required={markAsSold}
+          />
+          {errors.sale_price && (
+            <ErrorMessage>{errors.sale_price}</ErrorMessage>
+          )}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="sale_date">{t("management.asset.saleDate")}</Label>
+          <Input
+            type="date"
+            id="sale_date"
+            name="sale_date"
+            value={asset.sale_date || ""}
+            onChange={handleChange}
+            required={markAsSold}
+          />
+          {errors.sale_date && (
+            <ErrorMessage>{errors.sale_date}</ErrorMessage>
+          )}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="fees">{t("management.asset.saleFees")}</Label>
+          <Input
+            type="number"
+            step="any"
+            id="fees"
+            name="fees"
+            value={asset.fees ?? 0}
+            onChange={handleChange}
+            min="0"
+          />
+          {errors.fees && <ErrorMessage>{errors.fees}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="buyer">
+            {t("management.asset.buyerNotesOptional")}
+          </Label>
+          <Textarea
+            id="buyer"
+            name="buyer"
+            value={asset.buyer || ""}
+            onChange={handleChange}
+            rows={3}
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="notes">
+            {t("management.asset.saleNotesOptional")}
+          </Label>
+          <Textarea
+            id="notes"
+            name="notes"
+            value={asset.notes || ""}
+            onChange={handleChange}
+            rows={3}
+          />
+        </FormGroup>
+      </>
+    )}
+
       <FormGroup id="description-form-group">
         <Label htmlFor="description">{t("common.descriptionOptional")}</Label>
         <Textarea
@@ -276,9 +456,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
         />
       </FormGroup>
 
-      <div className="submit-button-container">
-        <SubmitButton
-          type="submit"
+  <div className="submit-button-container">
+    <SubmitButton
+      type="submit"
           disabled={
             Object.keys(errors).length > 0 &&
             Object.values(errors).some((err) => err !== "")

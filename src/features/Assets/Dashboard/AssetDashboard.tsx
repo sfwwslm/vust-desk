@@ -6,9 +6,16 @@ import { Asset } from "@/features/Assets/types";
 import AssetForm from "@/features/Assets/AssetForm/AssetForm";
 import Modal from "@/features/Assets/Modal/Modal";
 import CategoryManagementModal from "@/features/Assets/CategoryManagement/CategoryManagementModal";
-import { IoAdd, IoPencil, IoTrash, IoApps } from "react-icons/io5";
+import {
+  IoAdd,
+  IoPencil,
+  IoTrash,
+  IoApps,
+  IoCheckmarkCircle,
+} from "react-icons/io5";
 import { Theme } from "@/styles/themes";
 import Tooltip from "@/components/common/Tooltip/Tooltip";
+import { getCurrentDateFormatted } from "@/utils";
 import {
   DashboardContainer,
   SummarySection,
@@ -58,6 +65,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [showSold, setShowSold] = useState(false);
 
   /**
    * @function loadAssets
@@ -112,9 +120,29 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   }, [loadAssets, dataVersion]); // loadAssets dataVersion 作为依赖，当它改变时会强制重新加载数据
 
   const kpis = useMemo(() => {
-    const totalValue = assets.reduce((sum, asset) => sum + asset.price, 0);
-    const totalAssets = assets.length;
-    return { totalValue, totalAssets };
+    const holdingAssets = assets.filter(
+      (asset) => (asset.status || "holding") !== "sold"
+    );
+    const soldAssets = assets.filter(
+      (asset) => (asset.status || "holding") === "sold"
+    );
+    const totalHoldingCost = holdingAssets.reduce(
+      (sum, asset) => sum + (asset.price || 0),
+      0
+    );
+    const realizedProfit = soldAssets.reduce((sum, asset) => {
+      const profit =
+        asset.realized_profit ??
+        (asset.sale_price ?? 0) - (asset.price ?? 0) - (asset.fees ?? 0);
+      return sum + profit;
+    }, 0);
+    const holdingCount = holdingAssets.length;
+    return {
+      totalAssets: assets.length,
+      holdingCount,
+      totalHoldingCost,
+      realizedProfit,
+    };
   }, [assets]);
 
   const sortedAndFilteredAssets = useMemo(() => {
@@ -123,8 +151,15 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
         // 搜索过滤逻辑中包含的条件
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.category_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.brand?.toLocaleLowerCase().includes(searchTerm.toLowerCase())
+        asset.brand?.toLocaleLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.buyer?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (!showSold) {
+      filtered = filtered.filter(
+        (asset) => (asset.status || "holding") !== "sold"
+      );
+    }
 
     return [...filtered].sort((a, b) => {
       const key = sortConfig.key;
@@ -136,7 +171,11 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
       if (valB === null || valB === undefined) return -1;
 
       let comparisonResult = 0;
-      if (key === "purchase_date" || key === "expiration_date") {
+      if (
+        key === "purchase_date" ||
+        key === "expiration_date" ||
+        key === "sale_date"
+      ) {
         const dateA = new Date(valA as string).getTime();
         const dateB = new Date(valB as string).getTime();
         if (dateA < dateB) comparisonResult = -1;
@@ -148,7 +187,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 
       return order === "asc" ? comparisonResult : -comparisonResult;
     });
-  }, [assets, searchTerm, sortConfig]);
+  }, [assets, searchTerm, sortConfig, showSold]);
 
   const handleSort = (key: keyof Asset | "category_name") => {
     setSortConfig((prev) => ({
@@ -160,7 +199,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   useEffect(() => {
     // 搜索或数据变化时回到第一页，避免页码超出范围
     setCurrentPage(1);
-  }, [searchTerm, assets.length]);
+  }, [searchTerm, assets.length, showSold]);
 
   useEffect(() => {
     // 当总页数变小且当前页超出时，自动回退到最后一页
@@ -191,6 +230,17 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 
   const handleEdit = (asset: Asset) => {
     setEditingAsset(asset);
+    setIsFormModalOpen(true);
+  };
+
+  const handleSell = (asset: Asset) => {
+    setEditingAsset({
+      ...asset,
+      status: "sold",
+      sale_date: asset.sale_date || getCurrentDateFormatted(),
+      sale_price: asset.sale_price ?? asset.price,
+      fees: asset.fees ?? 0,
+    });
     setIsFormModalOpen(true);
   };
 
@@ -229,17 +279,35 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     <>
       <DashboardContainer theme={theme}>
         <SummarySection theme={theme} id="asset-summary">
-          {t("management.asset.totalAssets")}:{" "}
-          <strong>{kpis.totalAssets}</strong>
+          <span>
+            {t("management.asset.holdingAssetsLabel")}: <strong>{kpis.holdingCount}</strong>
+          </span>
           <span style={{ margin: "0 1rem" }}>|</span>
-          {t("management.asset.totalValue")}:
-          <strong>
-            ¥
-            {kpis.totalValue.toLocaleString("zh-CN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </strong>
+          <span>
+            {t("management.asset.holdingCost")}: 
+            <strong>
+              ￥
+              {kpis.totalHoldingCost.toLocaleString("zh-CN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </span>
+          <span style={{ margin: "0 1rem" }}>|</span>
+          <span>
+            {t("management.asset.realizedProfit")}: 
+            <strong>
+              ￥
+              {kpis.realizedProfit.toLocaleString("zh-CN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </span>
+          <span style={{ margin: "0 1rem" }}>|</span>
+          <span>
+            {t("management.asset.totalRecords")}: <strong>{kpis.totalAssets}</strong>
+          </span>
         </SummarySection>
 
         <TableSection theme={theme}>
@@ -256,6 +324,23 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                <input
+                  id="show-sold-toggle"
+                  type="checkbox"
+                  checked={showSold}
+                  onChange={(e) => setShowSold(e.target.checked)}
+                />
+                <label htmlFor="show-sold-toggle">
+                  {t("management.asset.showSoldToggle")}
+                </label>
+              </div>
               <ActionButton
                 id="asset-category-button"
                 onClick={() => setIsCategoryModalOpen(true)}
@@ -324,6 +409,42 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                         <span>{t("common.purchaseDate")}</span>
                       </Tooltip>
                     </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("status")}
+                      data-sort-active={sortConfig.key === "status"}
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.status")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("sale_price")}
+                      data-sort-active={sortConfig.key === "sale_price"}
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.salePriceShort")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("sale_date")}
+                      data-sort-active={sortConfig.key === "sale_date"}
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.saleDateShort")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("realized_profit")}
+                      data-sort-active={sortConfig.key === "realized_profit"}
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.profit")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
                     <TableHeaderCell theme={theme}>
                       {t("common.actions")}
                     </TableHeaderCell>
@@ -349,6 +470,30 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                       </TableCell>
                       <TableCell>￥ {asset.price.toLocaleString("zh-CN")}</TableCell>
                       <TableCell>{asset.purchase_date}</TableCell>
+                      <TableCell>
+                        {(asset.status || "holding") === "sold"
+                          ? t("management.asset.statusSold")
+                          : t("management.asset.statusHolding")}
+                      </TableCell>
+                      <TableCell>
+                        {asset.sale_price !== null && asset.sale_price !== undefined
+                          ? `￥ ${asset.sale_price.toLocaleString("zh-CN")}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell>{asset.sale_date || "—"}</TableCell>
+                      <TableCell>
+                        {(asset.status || "holding") === "sold"
+                          ? `￥ ${(
+                              asset.realized_profit ??
+                              (asset.sale_price ?? 0) -
+                                (asset.price ?? 0) -
+                                (asset.fees ?? 0)
+                            ).toLocaleString("zh-CN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : "—"}
+                      </TableCell>
                       <ActionCell>
                         <Tooltip text={t("common.edit")}>
                           <EditButton
@@ -356,6 +501,11 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                             onClick={() => handleEdit(asset)}
                           >
                             <IoPencil />
+                          </EditButton>
+                        </Tooltip>
+                        <Tooltip text={t("management.asset.markSold")}>
+                          <EditButton theme={theme} onClick={() => handleSell(asset)}>
+                            <IoCheckmarkCircle />
                           </EditButton>
                         </Tooltip>
                         <Tooltip text={t("common.delete")}>
@@ -431,6 +581,3 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 };
 
 export default AssetDashboard;
-
-
-

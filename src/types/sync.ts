@@ -74,6 +74,13 @@ export interface AssetDto {
   brand: string | null;
   model: string | null;
   serial_number: string | null;
+  status: string;
+  sale_price: number | null;
+  sale_date: string | null;
+  fees: number | null;
+  buyer: string | null;
+  notes: string | null;
+  realized_profit: number | null;
 }
 
 /**
