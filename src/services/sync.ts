@@ -1,7 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import { dbClient } from "./db";
-import { User, updateUsername } from "./user";
-import { ensureSaleColumns } from "./assetDb";
+import { getVersion } from "@tauri-apps/api/app";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { readDir } from "@tauri-apps/plugin-fs";
+import * as log from "@tauri-apps/plugin-log";
+import {
+  isPermissionGranted,
+  sendNotification,
+} from "@tauri-apps/plugin-notification";
 import {
   WEBSITE_GROUPS_TABLE_NAME,
   WEBSITES_TABLE_NAME,
@@ -10,11 +15,7 @@ import {
   SYNC_METADATA_TABLE_NAME,
   SEARCH_ENGINES_TABLE_NAME,
 } from "@/constants";
-import * as log from "@tauri-apps/plugin-log";
-import { readDir } from "@tauri-apps/plugin-fs";
 import { getIconsDir } from "@/utils/fs";
-import { uploadIcons, downloadIcons } from "./iconSync";
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import {
   CurrentUserPayload,
   ServerSyncData,
@@ -30,14 +31,54 @@ import {
   ClientInfoDto,
   VersionInfo,
 } from "@/types/sync";
+import { dbClient } from "./db";
 import {
-  isPermissionGranted,
-  sendNotification,
-} from "@tauri-apps/plugin-notification";
-import { getVersion } from "@tauri-apps/api/app";
+  ANONYMOUS_USER,
+  ANONYMOUS_USER_UUID,
+  User,
+  deleteUserWithData,
+  setUserLoginStatus,
+  updateUsername,
+} from "./user";
+import { ensureSaleColumns } from "./assetDb";
+import { uploadIcons, downloadIcons } from "./iconSync";
 
 const CHUNK_SIZE = 100; // 每块传输 100 条记录
 const MIN_SERVER_VERSION = "0.0.3";
+const ACCOUNT_DELETED_CODE = 403;
+const ACCOUNT_DISABLED_CODE = 403;
+
+const isAccountDeletedMessage = (message: string | undefined) => {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("账号已被删除") ||
+    lower.includes("account has been deleted") ||
+    lower.includes("account deleted")
+  );
+};
+
+const isAccountDeletedResponse = (resp?: ApiResponse<any>) =>
+  !!resp &&
+  !resp.success &&
+  resp.code === ACCOUNT_DELETED_CODE &&
+  isAccountDeletedMessage(resp.message);
+
+const isAccountDisabledMessage = (message: string | undefined) => {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("账号已被禁用") ||
+    lower.includes("account has been disabled") ||
+    lower.includes("account disabled")
+  );
+};
+
+const isAccountDisabledResponse = (resp?: ApiResponse<any>) =>
+  !!resp &&
+  !resp.success &&
+  resp.code === ACCOUNT_DISABLED_CODE &&
+  isAccountDisabledMessage(resp.message);
 
 const isVersionGte = (version: string, minimum: string): boolean => {
   const parse = (v: string) => v.split(".").map((n) => parseInt(n, 10) || 0);
@@ -352,6 +393,73 @@ const runSyncPrerequisites = async (
     }
   }
 };
+
+const handleAccountDeletedOnServer = async (
+  user: User,
+  updaters: SyncStatusUpdaters,
+  serverMessage?: string
+) => {
+  const {
+    setSyncMessage,
+    switchActiveUser,
+    refreshAvailableUsers,
+    incrementDataVersion,
+    t,
+  } = updaters;
+
+  setSyncMessage(
+    t("sync.accountDeletedOnServer", { reason: serverMessage || "" })
+  );
+
+  try {
+    await deleteUserWithData(user.uuid);
+    const users = await refreshAvailableUsers();
+    const anonymous =
+      users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+        uuid: ANONYMOUS_USER_UUID,
+        username: ANONYMOUS_USER,
+        isLoggedIn: 1,
+      };
+
+    switchActiveUser(anonymous);
+    incrementDataVersion();
+    setSyncMessage(t("sync.accountDeletedCleanupDone"));
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    log.error(`服务器删除账号，本地清理失败: ${errMsg}`);
+    setSyncMessage(t("sync.accountDeletedCleanupFailed", { error: errMsg }));
+  }
+};
+
+const handleAccountDisabledOnServer = async (
+  user: User,
+  updaters: SyncStatusUpdaters,
+  serverMessage?: string
+) => {
+  const { setSyncMessage, switchActiveUser, refreshAvailableUsers, t } =
+    updaters;
+
+  setSyncMessage(
+    t("sync.accountDisabledOnServer", { reason: serverMessage || "" })
+  );
+
+  try {
+    await setUserLoginStatus(user.uuid, false);
+    const users = await refreshAvailableUsers();
+    const anonymous =
+      users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+        uuid: ANONYMOUS_USER_UUID,
+        username: ANONYMOUS_USER,
+        isLoggedIn: 1,
+      };
+    switchActiveUser(anonymous);
+    setSyncMessage(t("sync.accountDisabledSignedOut"));
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    log.error(`服务器禁用账号，本地登出失败: ${errMsg}`);
+    setSyncMessage(t("sync.accountDisabledSignoutFailed", { error: errMsg }));
+  }
+};
 /**
  * @function sendDataInChunks
  * @description 将指定类型的数据分块发送到服务器。
@@ -435,6 +543,14 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       { user, payload: startPayload }
     );
     if (!startResponse.success || !startResponse.data) {
+      if (isAccountDisabledResponse(startResponse)) {
+        await handleAccountDisabledOnServer(user, updaters, startResponse.message);
+        return;
+      }
+      if (isAccountDeletedResponse(startResponse)) {
+        await handleAccountDeletedOnServer(user, updaters, startResponse.message);
+        return;
+      }
       throw new Error(`开启同步会话失败: ${startResponse.message}`);
     }
     const sessionId = startResponse.data.session_id;
@@ -467,6 +583,14 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     );
 
     if (!completeResponse.success || !completeResponse.data) {
+      if (isAccountDisabledResponse(completeResponse)) {
+        await handleAccountDisabledOnServer(user, updaters, completeResponse.message);
+        return;
+      }
+      if (isAccountDeletedResponse(completeResponse)) {
+        await handleAccountDeletedOnServer(user, updaters, completeResponse.message);
+        return;
+      }
       throw new Error(`完成同步失败: ${completeResponse.message}`);
     }
 
@@ -490,8 +614,33 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     incrementDataVersion();
     setSyncMessage(t("sync.syncSuccess"));
 
-  } catch (error) {
-    setSyncMessage(t("sync.syncFailed", { error: error }));
+  } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isAccountDeleted =
+      isAccountDeletedMessage(errorMessage) ||
+      (error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as any).code === ACCOUNT_DELETED_CODE &&
+        isAccountDeletedMessage(String((error as any).message || "")));
+    const isAccountDisabled =
+      isAccountDisabledMessage(errorMessage) ||
+      (error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as any).code === ACCOUNT_DISABLED_CODE &&
+        isAccountDisabledMessage(String((error as any).message || "")));
+
+    if (isAccountDeleted) {
+      await handleAccountDeletedOnServer(user, updaters, errorMessage);
+      return;
+    }
+    if (isAccountDisabled) {
+      await handleAccountDisabledOnServer(user, updaters, errorMessage);
+      return;
+    }
+
+    setSyncMessage(t("sync.syncFailed", { error: errorMessage }));
   } finally {
     setSyncCompleted(true);
   }
