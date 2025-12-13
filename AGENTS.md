@@ -34,6 +34,7 @@
 - PRs should state the problem, solution, affected platforms (Win/macOS/Linux), and risk areas; link issues when available.
 - For UI changes, attach before/after screenshots or short clips; note any new config keys or migration steps.
 - Keep `dist/`, `node_modules/`, and personal configs out of commits.
+- When writing commit messages, the changes should be split into functional commits rather than recorded as a single entry.
 
 ## Security & Configuration Tips
 
