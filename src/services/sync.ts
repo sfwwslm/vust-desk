@@ -46,6 +46,7 @@ import { uploadIcons, downloadIcons } from "./iconSync";
 const CHUNK_SIZE = 100; // 每块传输 100 条记录
 const MIN_SERVER_VERSION = "0.0.3";
 const ACCOUNT_DELETED_CODE = 403;
+const ACCOUNT_NOT_FOUND_CODE = 401;
 const ACCOUNT_DISABLED_CODE = 403;
 
 const isAccountDeletedMessage = (message: string | undefined) => {
@@ -58,11 +59,21 @@ const isAccountDeletedMessage = (message: string | undefined) => {
   );
 };
 
+const isAccountNotFoundMessage = (message: string | undefined) => {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("用户不存在") ||
+    lower.includes("account not found") ||
+    lower.includes("user not found")
+  );
+};
+
 const isAccountDeletedResponse = (resp?: ApiResponse<any>) =>
   !!resp &&
   !resp.success &&
-  resp.code === ACCOUNT_DELETED_CODE &&
-  isAccountDeletedMessage(resp.message);
+  ((resp.code === ACCOUNT_DELETED_CODE && isAccountDeletedMessage(resp.message)) ||
+    (resp.code === ACCOUNT_NOT_FOUND_CODE && isAccountNotFoundMessage(resp.message)));
 
 const isAccountDisabledMessage = (message: string | undefined) => {
   if (!message) return false;
@@ -618,11 +629,14 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isAccountDeleted =
       isAccountDeletedMessage(errorMessage) ||
+      isAccountNotFoundMessage(errorMessage) ||
       (error &&
         typeof error === "object" &&
         "code" in error &&
-        (error as any).code === ACCOUNT_DELETED_CODE &&
-        isAccountDeletedMessage(String((error as any).message || "")));
+        ((error as any).code === ACCOUNT_DELETED_CODE ||
+          (error as any).code === ACCOUNT_NOT_FOUND_CODE) &&
+        (isAccountDeletedMessage(String((error as any).message || "")) ||
+          isAccountNotFoundMessage(String((error as any).message || ""))));
     const isAccountDisabled =
       isAccountDisabledMessage(errorMessage) ||
       (error &&
