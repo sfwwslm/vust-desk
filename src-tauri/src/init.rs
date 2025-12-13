@@ -31,43 +31,45 @@ pub fn setup(app: &mut tauri::App) {
 
     #[cfg(desktop)]
     {
-        app.handle()
-            .plugin(
-                tauri_plugin_global_shortcut::Builder::new()
-                    .with_shortcuts(["ctrl+shift+x"])
-                    .unwrap()
-                    .with_handler(|app, shortcut, event| {
-                        if event.state == ShortcutState::Pressed
-                            && shortcut.matches(Modifiers::CONTROL | Modifiers::SHIFT, Code::KeyX)
-                            && let Some(window) = app.get_webview_window("main")
-                        {
-                            let is_visible = window.is_visible().unwrap();
-                            let is_minimized = window.is_minimized().unwrap();
-                            let is_focused = window.is_focused().unwrap();
+        if let Err(e) = app.handle().plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_shortcuts(["ctrl+shift+x"])
+                .unwrap()
+                .with_handler(|app, shortcut, event| {
+                    if event.state == ShortcutState::Pressed
+                        && shortcut.matches(Modifiers::CONTROL | Modifiers::SHIFT, Code::KeyX)
+                        && let Some(window) = app.get_webview_window("main")
+                    {
+                        let is_visible = window.is_visible().unwrap();
+                        let is_minimized = window.is_minimized().unwrap();
+                        let is_focused = window.is_focused().unwrap();
 
-                            if !is_visible {
-                                // 窗口是隐藏的 → 显示并聚焦
-                                window.show().unwrap();
-                                window.unminimize().unwrap();
-                                window.set_focus().unwrap();
-                            } else if is_minimized {
-                                // 窗口最小化 → 恢复显示
-                                window.unminimize().unwrap();
+                        if !is_visible {
+                            // 窗口是隐藏的 → 显示并聚焦
+                            window.show().unwrap();
+                            window.unminimize().unwrap();
+                            window.set_focus().unwrap();
+                        } else if is_minimized {
+                            // 窗口最小化 → 恢复显示
+                            window.unminimize().unwrap();
+                            window.set_focus().unwrap();
+                        } else {
+                            // 窗口不是隐藏或最小化 → 聚焦
+                            if !is_focused {
                                 window.set_focus().unwrap();
                             } else {
-                                // 窗口不是隐藏或最小化 → 聚焦
-                                if !is_focused {
-                                    window.set_focus().unwrap();
-                                } else {
-                                    // 窗口是聚焦时 → 最小化
-                                    window.minimize().unwrap();
-                                }
+                                // 窗口是聚焦时 → 最小化
+                                window.minimize().unwrap();
                             }
-                        };
-                    })
-                    .build(),
-            )
-            .unwrap();
+                        }
+                    };
+                })
+                .build(),
+        ) {
+            error!(
+                "Global shortcut could not be bound. It might be already in use by another application.: {e}"
+            );
+        };
     }
 
     info!("【初始化】`setup` 设置完成");
