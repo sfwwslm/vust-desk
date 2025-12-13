@@ -290,6 +290,17 @@
       "switch": "Switch",
       "addAccount": "Login to Another Account"
     },
+    "deleteUserTitle": "Delete Account",
+    "deleteUserMessage": "This will remove the local account \"{{username}}\" and all of its data (navigation, assets, search engines, sync history, etc.). This action cannot be undone.",
+    "deleteUserConfirm": "Delete Permanently",
+    "deleteUserButton": "Delete & Clean Data",
+    "deleteUserFailed": "Failed to delete account. Please try again later.",
+    "actions": {
+      "primaryTitle": "Account & Data",
+      "primaryDesc": "Login, claim, or sync your current account data.",
+      "dangerTitle": "Delete & Cleanup",
+      "dangerDesc": "Completely remove the local account and related data. Proceed with caution."
+    },
     "serverAddressLabel": "Server address",
     "serverAddressPlaceholder": "e.g., https://example.com:9991",
     "serverAddressHint": "Will be used for sync and all server requests after saving.",

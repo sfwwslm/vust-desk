@@ -1,5 +1,18 @@
-import { dbClient } from "@/services/db";
+import type Database from "@tauri-apps/plugin-sql";
+import { join } from "@tauri-apps/api/path";
+import { readDir, remove } from "@tauri-apps/plugin-fs";
 import * as log from "@tauri-apps/plugin-log";
+import {
+  ASSET_CATEGORIES_TABLE_NAME,
+  ASSET_TABLE_NAME,
+  SEARCH_ENGINES_TABLE_NAME,
+  SYNC_METADATA_TABLE_NAME,
+  USER_TABLE_NAME,
+  WEBSITE_GROUPS_TABLE_NAME,
+  WEBSITES_TABLE_NAME,
+} from "@/constants";
+import { getIconsDir } from "@/utils/fs";
+import { dbClient, getDb } from "@/services/db";
 
 /** 用户表的数据结构 */
 export interface User {
@@ -156,3 +169,135 @@ export const getActiveUserFromStorage = (): User | null => {
     return null;
   }
 };
+
+/**
+ * 删除本地数据库中未被任何记录引用的图标文件。
+ * @returns {Promise<number>} 实际删除的文件数量。
+ */
+export async function cleanupUnusedIcons(): Promise<number> {
+  try {
+    const websiteIcons = await dbClient.select<{ local_icon_path: string | null }>(
+      `SELECT DISTINCT local_icon_path FROM ${WEBSITES_TABLE_NAME} WHERE local_icon_path IS NOT NULL AND is_deleted = 0`
+    );
+    const searchEngineIcons = await dbClient.select<{ local_icon_path: string | null }>(
+      `SELECT DISTINCT local_icon_path FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE local_icon_path IS NOT NULL`
+    );
+
+    const usedIconNames = new Set<string>();
+    websiteIcons.forEach((row) => row.local_icon_path && usedIconNames.add(row.local_icon_path));
+    searchEngineIcons.forEach(
+      (row) => row.local_icon_path && usedIconNames.add(row.local_icon_path)
+    );
+
+    const iconsDir = await getIconsDir();
+    let entries: Awaited<ReturnType<typeof readDir>>;
+    try {
+      entries = await readDir(iconsDir);
+    } catch (error) {
+      log.warn(`读取图标目录失败，跳过图标清理: ${error}`);
+      return 0;
+    }
+
+    let removed = 0;
+    for (const entry of entries) {
+      if (!entry.name || entry.isDirectory) continue;
+      if (!usedIconNames.has(entry.name)) {
+        const fullPath = await join(iconsDir, entry.name);
+        try {
+          await remove(fullPath);
+          removed += 1;
+        } catch (error) {
+          log.error(`删除未引用图标失败: ${fullPath} | ${error}`);
+        }
+      }
+    }
+
+    if (removed === 0) {
+      log.debug("没有需要清理的本地图标文件。");
+    }
+    return removed;
+  } catch (error) {
+    log.error(`清理未使用图标时出错: ${error}`);
+    return 0;
+  }
+}
+
+async function executeWithRetry(
+  db: Database,
+  sql: string,
+  params: any[],
+  retries = 5,
+  delayMs = 300
+): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await db.execute(sql, params);
+      return;
+    } catch (error: any) {
+      const message = error?.toString?.() || "";
+      const isLocked = message.includes("database is locked");
+      if (!isLocked || attempt === retries) {
+        throw error instanceof Error ? error : new Error(String(error));
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+}
+
+/**
+ * 删除指定用户及其关联的本地数据（导航、资产、搜索引擎等），并清理冗余图标。
+ * @param userUuid - 目标用户的 UUID。
+ */
+export async function deleteUserWithData(userUuid: string): Promise<void> {
+  if (userUuid === ANONYMOUS_USER_UUID) {
+    throw new Error("匿名用户用于离线数据，无法删除。");
+  }
+
+  const db = await getDb();
+  try {
+    // tauri plugin-sql 不支持事务，按依赖顺序逐条执行并重试应对锁
+    const deletions = [
+      `DELETE FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1`,
+      `DELETE FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1`,
+      `DELETE FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1`,
+      `DELETE FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1`,
+      `DELETE FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1`,
+      `DELETE FROM ${SYNC_METADATA_TABLE_NAME} WHERE user_uuid = $1`,
+    ];
+
+    for (const sql of deletions) {
+      await executeWithRetry(db, sql, [userUuid]);
+    }
+
+    let userResult;
+    try {
+      userResult = await db.execute(`DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`, [
+        userUuid,
+      ]);
+    } catch (error: any) {
+      const message = error?.toString?.() || "";
+      if (message.includes("database is locked")) {
+        await executeWithRetry(db, `DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`, [
+          userUuid,
+        ]);
+        userResult = { rowsAffected: 1 };
+      } else {
+        throw error;
+      }
+    }
+
+    if (!userResult || (userResult.rowsAffected || 0) === 0) {
+      throw new Error("未找到要删除的用户，可能已被移除。");
+    }
+
+    log.info(`已删除用户 ${userUuid} 及其关联数据。`);
+  } catch (error) {
+    log.error(`删除用户 ${userUuid} 失败: ${error}`);
+    throw error instanceof Error ? error : new Error(String(error));
+  }
+
+  const removedIcons = await cleanupUnusedIcons();
+  if (removedIcons > 0) {
+    log.info(`已清理 ${removedIcons} 个未引用的本地图标文件。`);
+  }
+}

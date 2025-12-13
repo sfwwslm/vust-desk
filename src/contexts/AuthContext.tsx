@@ -3,11 +3,12 @@ import {
   useCallback,
   useContext,
   ReactNode,
-  useState,
   useEffect,
+  useState,
 } from "react";
-import useLocalStorage from "@/hooks/useLocalStorage";
 import * as log from "@tauri-apps/plugin-log";
+
+import useLocalStorage from "@/hooks/useLocalStorage";
 import { saveUser } from "@/services/db";
 import {
   User,
@@ -16,6 +17,7 @@ import {
   setUserLoginStatus,
   getAllUsers,
   updateUserServerAddress,
+  deleteUserWithData,
 } from "@/services/user";
 import { apiClientWrapper } from "@/services/apiClient";
 import { ApiError, HttpError } from "@/services/errors";
@@ -111,6 +113,12 @@ interface AuthContextType {
    * @param {User} user - 要切换到的目标用户对象。
    */
   switchActiveUser: (user: User) => void;
+
+  /**
+   * @function deleteUser
+   * @description 从本地删除指定用户及其数据。
+   */
+  deleteUser: (uuid: string) => Promise<void>;
 
   /**
    * @property {boolean} isDataOperationInProgress
@@ -290,6 +298,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeUser, logoutUser]);
 
+  const deleteUser = useCallback(
+    async (uuid: string) => {
+      await deleteUserWithData(uuid);
+      const refreshedUsers = await refreshAvailableUsers();
+
+      if (activeUser?.uuid === uuid) {
+        const anonymousUser =
+          refreshedUsers.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+            uuid: ANONYMOUS_USER_UUID,
+            username: ANONYMOUS_USER,
+            isLoggedIn: 1,
+          };
+        switchActiveUser(anonymousUser);
+      }
+
+      incrementDataVersion();
+      log.info(`用户 ${uuid} 及其本地数据已被删除。`);
+    },
+    [
+      activeUser,
+      incrementDataVersion,
+      refreshAvailableUsers,
+      switchActiveUser,
+    ]
+  );
+
   const updateServerAddress = useCallback(
     async (serverAddress: string) => {
       if (!activeUser) {
@@ -326,6 +360,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         logoutUser,
         switchActiveUser,
+        deleteUser,
         isDataOperationInProgress,
         dataVersion,
         setDataOperationInProgress,

@@ -45,12 +45,51 @@ const UserSwitcherContainer = styled.div`
   gap: 1rem;
 `;
 
-const AuthActionsContainer = styled(SettingsBlock)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const AuthActionsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  flex-wrap: wrap; /* 允许在空间不足时换行 */
+`;
+
+const ActionCard = styled(SettingsBlock)`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+`;
+
+const ActionTitle = styled.div`
+  font-weight: 700;
+  color: ${(props) => props.theme.colors.textPrimary};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ActionDesc = styled.p`
+  margin: 0;
+  color: ${(props) => props.theme.colors.textSecondary};
+  font-size: 0.92rem;
+  line-height: 1.4;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  ${StyledButton} {
+    width: 100%;
+  }
+
+  .sync-data-button {
+    width: 100%;
+  }
+`;
+
+const DangerCard = styled(ActionCard)`
+  border-color: ${(props) => props.theme.colors.error};
+  background-color: ${(props) => props.theme.colors.surface};
 `;
 
 const ServerAddressBlock = styled(SettingsBlock)`
@@ -102,14 +141,16 @@ const AuthSettings: React.FC = () => {
     incrementDataVersion,
     refreshAvailableUsers,
     updateServerAddress,
+    deleteUser,
   } = useAuth();
-  const { openModal } = useModal();
+  const { openModal, openConfirm, openAlert } = useModal();
   const { isSyncing, setIsSyncing, setSyncMessage, setSyncCompleted } =
     useSync(); // 从 context 获取状态和方法
   const [serverAddress, setServerAddress] = useState("");
   const [serverAddressError, setServerAddressError] = useState("");
   const [serverAddressUpdated, setServerAddressUpdated] = useState(false);
   const [isUpdatingServer, setIsUpdatingServer] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const handleUserSwitch = (uuid: string | number) => {
     const selectedUser = availableUsers.find((u) => u.uuid === uuid);
@@ -176,6 +217,29 @@ const AuthSettings: React.FC = () => {
     }
   };
 
+  const handleDeleteAccount = () => {
+    if (!activeUser || !canEditServerAddress) return;
+    openConfirm({
+      title: t("account.deleteUserTitle"),
+      message: t("account.deleteUserMessage", { username: activeUser.username }),
+      confirmText: t("account.deleteUserConfirm"),
+      onConfirm: async () => {
+        setIsDeletingUser(true);
+        try {
+          await deleteUser(activeUser.uuid);
+        } catch (error: any) {
+          openAlert({
+            title: t("common.operationFailed"),
+            message: error?.message || t("account.deleteUserFailed"),
+            confirmText: t("button.confirm"),
+          });
+        } finally {
+          setIsDeletingUser(false);
+        }
+      },
+    });
+  };
+
   return (
     <>
       <AuthContainer className="auth-settings-container">
@@ -233,35 +297,57 @@ const AuthSettings: React.FC = () => {
 
         {/* 操作区块 */}
         <AuthActionsContainer>
-          <StyledButton
-            onClick={() =>
-              openModal(
-                (close) => <LoginModal isOpen={true} onClose={close} />,
-                {
-                  key: "login",
-                }
-              )
-            }
-            variant="primary"
-          >
-            <IoLogInOutline style={{ marginRight: "8px" }} />
-            {t("account.title")}
-          </StyledButton>
-
-          {/* 数据认领和同步按钮 */}
-          {isLoggedIn && activeUser?.uuid !== ANONYMOUS_USER_UUID && (
-            <>
-              <DataClaim />
+          <ActionCard>
+            <ActionTitle>{t("account.actions.primaryTitle")}</ActionTitle>
+            <ActionDesc>{t("account.actions.primaryDesc")}</ActionDesc>
+            <ActionButtons>
               <StyledButton
-                onClick={handleSync}
-                disabled={isSyncing}
-                variant="secondary"
-                className="sync-data-button"
+                onClick={() =>
+                  openModal(
+                    (close) => <LoginModal isOpen={true} onClose={close} />,
+                    {
+                      key: "login",
+                    }
+                  )
+                }
+                variant="primary"
               >
-                <IoSyncOutline style={{ marginRight: "8px" }} />
-                {isSyncing ? t("account.syncing") : t("account.dataSync")}
+                <IoLogInOutline style={{ marginRight: "8px" }} />
+                {t("account.title")}
               </StyledButton>
-            </>
+              {isLoggedIn && activeUser?.uuid !== ANONYMOUS_USER_UUID && (
+                <>
+                  <DataClaim />
+                  <StyledButton
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                    variant="secondary"
+                    className="sync-data-button"
+                  >
+                    <IoSyncOutline style={{ marginRight: "8px" }} />
+                    {isSyncing ? t("account.syncing") : t("account.dataSync")}
+                  </StyledButton>
+                </>
+              )}
+            </ActionButtons>
+          </ActionCard>
+
+          {isLoggedIn && activeUser?.uuid !== ANONYMOUS_USER_UUID && (
+            <DangerCard>
+              <ActionTitle>{t("account.actions.dangerTitle")}</ActionTitle>
+              <ActionDesc>{t("account.actions.dangerDesc")}</ActionDesc>
+              <ActionButtons>
+                <StyledButton
+                  onClick={handleDeleteAccount}
+                  disabled={isDeletingUser}
+                  variant="danger"
+                >
+                  {isDeletingUser
+                    ? t("common.loading")
+                    : t("account.deleteUserButton")}
+                </StyledButton>
+              </ActionButtons>
+            </DangerCard>
           )}
         </AuthActionsContainer>
       </AuthContainer>

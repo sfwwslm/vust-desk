@@ -55,6 +55,15 @@ export async function getDb(): Promise<Database> {
 
       log.debug(`[DB] 正在加载数据库: ${dbUrl}`);
       const db = await Database.load(dbUrl);
+      await db.execute("PRAGMA foreign_keys = ON");
+      await db.execute("PRAGMA busy_timeout = 5000");
+      try {
+        await db.execute("PRAGMA journal_mode = WAL");
+        await db.execute("PRAGMA synchronous = NORMAL");
+      } catch (err) {
+        log.warn(`[DB] 设置 WAL 或同步模式失败，继续运行: ${err}`);
+      }
+      log.debug("[DB] 外键约束与 busy_timeout 已开启。");
 
       // 加载成功后，将实例缓存起来，以便后续调用直接返回
       instance = db;

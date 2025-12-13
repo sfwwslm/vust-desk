@@ -290,6 +290,17 @@
       "switch": "切换",
       "addAccount": "登录其它账户"
     },
+    "deleteUserTitle": "删除账户",
+    "deleteUserMessage": "将从本地删除账户“{{username}}”及其相关的数据（导航、资产、搜索引擎、同步记录等）。此操作不可恢复，请谨慎操作。",
+    "deleteUserConfirm": "彻底删除",
+    "deleteUserButton": "删除并清理数据",
+    "deleteUserFailed": "删除账户失败，请稍后再试。",
+    "actions": {
+      "primaryTitle": "账号与数据",
+      "primaryDesc": "登录、认领或同步当前账户的数据。",
+      "dangerTitle": "删除与清理",
+      "dangerDesc": "彻底移除本地账户和关联数据，谨慎操作。"
+    },
     "serverAddressLabel": "服务器地址",
     "serverAddressPlaceholder": "例如：https://example.com:9991",
     "serverAddressHint": "修改后将应用于同步、图标等所有服务请求。",

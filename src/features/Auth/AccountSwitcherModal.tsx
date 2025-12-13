@@ -1,13 +1,14 @@
 import React from "react";
-import styled from "styled-components";
-import { useAuth } from "@/contexts/AuthContext";
-import { User, ANONYMOUS_USER_UUID } from "@/services/user";
-import { StyledButton } from "@/components/styled/StyledButton";
 import { useTranslation } from "react-i18next";
-import { useModal } from "@/contexts/ModalContext";
-import LoginModal from "./LoginModal";
-import Modal from "../Assets/Modal/Modal";
 import { IoPersonAddOutline } from "react-icons/io5";
+import styled from "styled-components";
+
+import { StyledButton } from "@/components/styled/StyledButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
+import { User, ANONYMOUS_USER_UUID } from "@/services/user";
+import Modal from "../Assets/Modal/Modal";
+import LoginModal from "./LoginModal";
 
 const UserList = styled.ul`
   list-style: none;
@@ -135,32 +136,28 @@ const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({
 
             {/* 操作按钮区域 */}
             <Actions>
-              {/* 判断当前遍历的用户是否为全局激活的用户 */}
               {user.uuid === activeUser?.uuid ? (
-                // 如果是当前用户，则显示“当前”标签
                 <CurrentUserTag>
                   {t("account.switchAccount.current")}
                 </CurrentUserTag>
               ) : (
-                // 如果不是当前用户，则显示操作按钮
+                <StyledButton
+                  variant="ghost"
+                  onClick={() => handleSwitch(user)}
+                >
+                  {t("account.switchAccount.switch")}
+                </StyledButton>
+              )}
+
+              {user.uuid !== ANONYMOUS_USER_UUID &&
+                user.uuid !== activeUser?.uuid && (
                 <>
-                  {/* “切换”按钮 */}
                   <StyledButton
                     variant="ghost"
-                    onClick={() => handleSwitch(user)}
+                    onClick={() => handleLogout(user)}
                   >
-                    {t("account.switchAccount.switch")}
+                    {t("account.logoutButton")}
                   </StyledButton>
-
-                  {/* “退出”按钮：仅对非匿名用户显示 */}
-                  {user.uuid !== ANONYMOUS_USER_UUID && (
-                    <StyledButton
-                      variant="ghost" // 统一使用 ghost 样式
-                      onClick={() => handleLogout(user)}
-                    >
-                      {t("account.logoutButton")}
-                    </StyledButton>
-                  )}
                 </>
               )}
             </Actions>
