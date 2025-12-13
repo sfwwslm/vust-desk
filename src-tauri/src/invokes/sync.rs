@@ -2,7 +2,7 @@ use crate::types::{
     APP_CONFIG_DIR, HOME_VUST_DIR,
     session::{CurrentUserPayload, User},
     sync::{
-        ClientInfoDto, ClientSyncDataChunk, ClientSyncPayload, ApiResponse, ServerSyncData,
+        ApiResponse, ClientInfoDto, ClientSyncDataChunk, ClientSyncPayload, ServerSyncData,
         StartSyncResponse, VersionInfo,
     },
 };
