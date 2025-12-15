@@ -45,7 +45,7 @@ import { uploadIcons, downloadIcons } from "./iconSync";
 
 const DEFAULT_CHUNK_SIZE =
   Number((import.meta as any).env?.VITE_SYNC_CHUNK_SIZE ?? 100) || 100; // 支持环境变量覆盖，默认 100
-const MIN_SERVER_VERSION = "0.0.3";
+const MIN_SERVER_VERSION = "0.0.5";
 const ACCOUNT_DELETED_CODE = 403;
 const ACCOUNT_NOT_FOUND_CODE = 401;
 const ACCOUNT_DISABLED_CODE = 403;
