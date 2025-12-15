@@ -93,6 +93,24 @@ fn all_migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
             sql: include_str!("../../migrations/0008_assets_sale_fields.sql"),
         },
+        Migration {
+            version: 9,
+            description: "add_rev_and_sync_rev",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0009_add_rev_and_sync_rev.sql"),
+        },
+        Migration {
+            version: 10,
+            description: "add_is_deleted_to_search_engines",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0010_add_is_deleted_to_search_engines.sql"),
+        },
+        Migration {
+            version: 11,
+            description: "create_sync_logs",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0011_create_sync_logs.sql"),
+        },
     ]
 }
 

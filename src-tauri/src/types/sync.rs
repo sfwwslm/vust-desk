@@ -17,6 +17,7 @@ pub struct WebsiteGroupDto {
     pub description: Option<String>,
     pub sort_order: Option<i64>, // Rust 中对应 SQLite 的 INTEGER
     pub is_deleted: i64,         // 对应 SQLite 的 INTEGER (0 或 1)
+    pub rev: i64,
     pub updated_at: String,      // ISO 8601 格式的字符串
 }
 
@@ -33,6 +34,7 @@ pub struct WebsitesDto {
     pub description: Option<String>,
     pub sort_order: Option<i64>,
     pub is_deleted: i64,
+    pub rev: i64,
     pub updated_at: String,
 }
 
@@ -42,6 +44,7 @@ pub struct AssetCategoryDto {
     pub name: String,
     pub is_default: i64, // 服务器可能需要根据这个标志做特殊处理
     pub is_deleted: i64,
+    pub rev: i64,
     pub updated_at: String,
 }
 
@@ -55,6 +58,7 @@ pub struct AssetDto {
     pub expiration_date: Option<String>,
     pub description: Option<String>,
     pub is_deleted: i64,
+    pub rev: i64,
     pub updated_at: String,
     pub brand: Option<String>,
     pub model: Option<String>,
@@ -70,6 +74,8 @@ pub struct SearchEngineDto {
     pub local_icon_path: Option<String>,
     pub is_default: i64,
     pub sort_order: Option<i64>,
+    pub is_deleted: i64,
+    pub rev: i64,
     pub updated_at: String,
 }
 
@@ -86,6 +92,7 @@ pub struct SyncDataDto {
 /// 服务端成功同步后返回的数据
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerSyncData {
+    pub current_synced_rev: i64,
     pub current_synced_at: String,
     pub sync_data: SyncDataDto,
     pub icons_to_upload: Vec<String>, // 需要客户端上传的图标文件名列表
@@ -101,7 +108,7 @@ pub struct ServerSyncData {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientSyncData {
     pub user_uuid: String, // 用户UUID，只发送一次
-    pub last_synced_at: String,
+    pub last_synced_rev: i64,
     pub sync_data: SyncDataDto,
     pub local_icons: Vec<String>, // 客户端本地拥有的所有图标文件名
 }
@@ -127,13 +134,14 @@ pub struct VersionInfo {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientSyncPayload {
     pub user_uuid: String,
-    pub last_synced_at: String,
+    pub last_synced_rev: i64,
 }
 
 /// `sync/start` 接口的成功响应数据
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StartSyncResponse {
     pub session_id: String,
+    pub suggested_chunk_size: Option<usize>,
 }
 
 /// 数据块的类型枚举

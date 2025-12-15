@@ -43,7 +43,8 @@ import {
 import { ensureSaleColumns } from "./assetDb";
 import { uploadIcons, downloadIcons } from "./iconSync";
 
-const CHUNK_SIZE = 100; // 每块传输 100 条记录
+const DEFAULT_CHUNK_SIZE =
+  Number((import.meta as any).env?.VITE_SYNC_CHUNK_SIZE ?? 100) || 100; // 支持环境变量覆盖，默认 100
 const MIN_SERVER_VERSION = "0.0.3";
 const ACCOUNT_DELETED_CODE = 403;
 const ACCOUNT_NOT_FOUND_CODE = 401;
@@ -99,6 +100,51 @@ const isVersionGte = (version: string, minimum: string): boolean => {
   if (a2 !== b2) return a2 > b2;
   return a3 >= b3;
 };
+
+// 统一格式化错误日志，便于排查 invoke/网络层返回的原始信息
+function formatError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
+// 同步日志：插入一条记录
+async function createSyncLog(sessionId: string, userUuid: string): Promise<void> {
+  const now = new Date().toISOString();
+  try {
+    await dbClient.execute(
+      `INSERT INTO sync_logs (session_id, user_uuid, started_at, status) VALUES ($1, $2, $3, 'running')`,
+      [sessionId, userUuid, now]
+    );
+  } catch (error) {
+    log.warn(`写入同步日志失败（create）：${formatError(error)}`);
+  }
+}
+
+// 同步日志：更新状态/摘要/错误
+async function finalizeSyncLog(
+  sessionId: string,
+  status: "success" | "failed",
+  summary?: string,
+  errorText?: string
+): Promise<void> {
+  const now = new Date().toISOString();
+  try {
+    await dbClient.execute(
+      `
+        UPDATE sync_logs
+        SET finished_at = $1, status = $2, summary = $3, error = $4
+        WHERE session_id = $5
+      `,
+      [now, status, summary || null, errorText || null, sessionId]
+    );
+  } catch (error) {
+    log.warn(`写入同步日志失败（finalize）：${formatError(error)}`);
+  }
+}
 
 /**
  * @function processServerData
@@ -486,15 +532,16 @@ async function sendDataInChunks<T>(
   dataType: DataType,
   data: T[],
   setSyncMessage: (message: string) => void,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: any) => string,
+  chunkSize: number
 ) {
   if (data.length === 0) {
     log.info(`[同步] 无需同步数据: ${dataType}`);
     return;
   }
-  const totalChunks = Math.ceil(data.length / CHUNK_SIZE);
+  const totalChunks = Math.ceil(data.length / chunkSize);
   for (let i = 0; i < totalChunks; i++) {
-    const chunk = data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    const chunk = data.slice(i * chunkSize, (i + 1) * chunkSize);
     setSyncMessage(
       t("sync.sendingChunk", {
         type: t(`sync.dataType.${dataType}`),
@@ -507,7 +554,23 @@ async function sendDataInChunks<T>(
       data_type: dataType,
       chunk_data: chunk as any,
     };
-    await invoke("sync_chunk", { user, payload: chunkPayload });
+    // 简单重试，避免网络波动导致同步中断
+    let attempt = 0;
+    const maxRetries = 3;
+    while (true) {
+      try {
+        await invoke("sync_chunk", { user, payload: chunkPayload });
+        break;
+      } catch (err) {
+        attempt += 1;
+        const backoff = 300 * attempt;
+        log.warn(`发送分块失败，正在重试(${attempt}/${maxRetries})，等待 ${backoff}ms: ${err}`);
+        if (attempt >= maxRetries) {
+          throw err;
+        }
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+      }
+    }
   }
 }
 
@@ -528,7 +591,12 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
   setIsSyncing(true);
   setSyncCompleted(false);
 
+  let currentSessionId: string | undefined;
+
   try {
+    // 动态分块大小，兼容服务器建议和本地默认
+    let chunkSize = DEFAULT_CHUNK_SIZE;
+
     // 1. 验证用户和版本
     await runSyncPrerequisites(user, updaters);
 
@@ -547,7 +615,8 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     setSyncMessage(t("sync.startingSession"));
     const startPayload: ClientSyncPayload = {
       user_uuid: user.uuid,
-      last_synced_at: (await getLastSyncTimestamp(user.uuid)) || "1970-01-01T00:00:00.000Z",
+      // 使用服务器分配的 rev 做增量游标，避免依赖客户端时钟
+      last_synced_rev: await getLastSyncRevision(user.uuid),
     };
     const startResponse: ApiResponse<StartSyncResponse> = await invoke(
       "sync_start",
@@ -565,33 +634,44 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       throw new Error(`开启同步会话失败: ${startResponse.message}`);
     }
     const sessionId = startResponse.data.session_id;
+    currentSessionId = sessionId;
+    await createSyncLog(sessionId, user.uuid);
+    if (startResponse.data.suggested_chunk_size && startResponse.data.suggested_chunk_size > 0) {
+      chunkSize = startResponse.data.suggested_chunk_size;
+      log.info(`采用服务器建议的分块大小: ${chunkSize}`);
+    }
 
     // 4. 分块发送各类数据
     const dataToSend = [
-      { type: DataType.WebsiteGroups, query: `SELECT uuid, name, description, sort_order, is_deleted, updated_at FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1` },
-      { type: DataType.Websites, query: `SELECT uuid, group_uuid, title, url, url_lan, default_icon, local_icon_path, background_color, description, sort_order, is_deleted, updated_at FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1` },
-      { type: DataType.AssetCategories, query: `SELECT uuid, name, is_default, is_deleted, updated_at FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1` },
+      { type: DataType.WebsiteGroups, query: `SELECT uuid, name, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1` },
+      { type: DataType.Websites, query: `SELECT uuid, group_uuid, title, url, url_lan, default_icon, local_icon_path, background_color, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1` },
+      { type: DataType.AssetCategories, query: `SELECT uuid, name, is_default, is_deleted, rev, updated_at FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1` },
       {
         type: DataType.Assets,
-        query: `SELECT uuid, category_uuid, name, purchase_date, price, expiration_date, description, is_deleted, updated_at, brand, model, serial_number, status, sale_price, sale_date, fees, buyer, notes, realized_profit FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1`,
+        query: `SELECT uuid, category_uuid, name, purchase_date, price, expiration_date, description, is_deleted, rev, updated_at, brand, model, serial_number, status, sale_price, sale_date, fees, buyer, notes, realized_profit FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1`,
       },
-      { type: DataType.SearchEngines, query: `SELECT uuid, name, url_template, default_icon, local_icon_path, is_default, sort_order, updated_at FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1` },
+      { type: DataType.SearchEngines, query: `SELECT uuid, name, url_template, default_icon, local_icon_path, is_default, sort_order, is_deleted, rev, updated_at FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1` },
     ];
 
     for (const { type, query } of dataToSend) {
       const data = await dbClient.select<any[]>(query, [user.uuid]);
-      await sendDataInChunks(user, sessionId, type, data, setSyncMessage, t);
+      await sendDataInChunks(user, sessionId, type, data, setSyncMessage, t, chunkSize);
     }
 
     // 单独处理并发送 localIcons
-    await sendDataInChunks(user, sessionId, DataType.LocalIcons, localIcons, setSyncMessage, t);
+    await sendDataInChunks(user, sessionId, DataType.LocalIcons, localIcons, setSyncMessage, t, chunkSize);
 
     // 5. 完成同步会话并处理服务器返回的数据
     setSyncMessage(t("sync.completingSync"));
-    const completeResponse: ApiResponse<ServerSyncData> = await invoke(
-      "sync_complete",
-      { user, sessionId }
-    );
+    let completeResponse: ApiResponse<ServerSyncData>;
+    try {
+      completeResponse = await invoke("sync_complete", { user, sessionId });
+    } catch (err) {
+      // 记录原始错误，便于排查 server/解析问题
+      const errText = formatError(err);
+      log.error(`sync_complete 调用失败: ${errText}`);
+      throw err;
+    }
 
     if (!completeResponse.success || !completeResponse.data) {
       if (isAccountDisabledResponse(completeResponse)) {
@@ -621,9 +701,14 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       await downloadIcons(serverData.icons_to_download);
     }
 
-    await updateLastSyncTimestamp(user.uuid, serverData.current_synced_at);
+    await updateLastSyncRevision(user.uuid, serverData.current_synced_rev);
     incrementDataVersion();
+    const summaryText = `同步完成：分组${serverData.website_groups_count}，网站${serverData.websites_count}，资产分类${serverData.categories_count}，资产${serverData.assets_count}，搜索引擎${serverData.search_engines_count}，已上传图标${serverData.icons_to_upload.length}，已下载图标${serverData.icons_to_download.length}`;
+    // UI 仅展示简洁提示，详细信息写入日志
     setSyncMessage(t("sync.syncSuccess"));
+    if (currentSessionId) {
+      await finalizeSyncLog(currentSessionId, "success", summaryText);
+    }
 
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -647,14 +732,23 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
 
     if (isAccountDeleted) {
       await handleAccountDeletedOnServer(user, updaters, errorMessage);
+      if (currentSessionId) {
+        await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+      }
       return;
     }
     if (isAccountDisabled) {
       await handleAccountDisabledOnServer(user, updaters, errorMessage);
+      if (currentSessionId) {
+        await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+      }
       return;
     }
 
     setSyncMessage(t("sync.syncFailed", { error: errorMessage }));
+    if (currentSessionId) {
+      await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+    }
   } finally {
     setSyncCompleted(true);
   }
@@ -667,56 +761,47 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
  * @param {string} userUuid - 用户的 UUID。
  * @returns {Promise<string | null>} 如果找到了时间戳，则返回其字符串形式，否则返回 null。
  */
-export async function getLastSyncTimestamp(
+export async function getLastSyncRevision(
   userUuid: string
-): Promise<string | null> {
+): Promise<number> {
   try {
-    const result = await dbClient.select<{ last_synced_at: string }>(
-      `SELECT last_synced_at FROM ${SYNC_METADATA_TABLE_NAME} WHERE user_uuid = $1`,
+    const result = await dbClient.select<{ last_synced_rev: number }>(
+      `SELECT last_synced_rev FROM ${SYNC_METADATA_TABLE_NAME} WHERE user_uuid = $1`,
       [userUuid]
     );
 
-    // select 方法总是返回一个数组，即使只有一条或零条记录
-    if (result.length > 0) {
-      // 成功找到记录，返回时间戳
-      return result[0].last_synced_at;
-    } else {
-      // 如果没有找到记录（例如，该用户从未同步过），则返回 null
-      log.info(`用户 ${userUuid} 尚未有同步记录。`);
-      return null;
+    if (result.length > 0 && typeof result[0].last_synced_rev === "number") {
+      return result[0].last_synced_rev;
     }
+    log.info(`用户 ${userUuid} 尚未有同步 rev 记录，默认返回 0。`);
+    return 0;
   } catch (error) {
-    log.error(`查询 last_synced_at 失败: ${error}`);
-    // 发生错误时也返回 null，让调用方处理
-    return null;
+    log.error(`查询 last_synced_rev 失败: ${error}`);
+    return 0;
   }
 }
 
 /**
- * @function updateLastSyncTimestamp
- * @description 为指定用户插入或更新其最后同步成功的时间戳。
- * @param {string} userUuid - 用户的 UUID。
- * @param {string} timestamp - 最新的同步时间戳，通常由服务器在同步成功后返回。
- * @returns {Promise<void>}
+ * @function updateLastSyncRevision
+ * @description 在同步成功后，记录服务端返回的最新修订号，用于下一次增量同步。
  */
-export async function updateLastSyncTimestamp(
+export async function updateLastSyncRevision(
   userUuid: string,
-  timestamp: string
+  revision: number
 ): Promise<void> {
   try {
     const query = `
-      INSERT INTO ${SYNC_METADATA_TABLE_NAME} (user_uuid, last_synced_at)
+      INSERT INTO ${SYNC_METADATA_TABLE_NAME} (user_uuid, last_synced_rev)
       VALUES ($1, $2)
       ON CONFLICT(user_uuid) DO UPDATE SET
-        last_synced_at = excluded.last_synced_at;
+        last_synced_rev = excluded.last_synced_rev;
     `;
 
-    await dbClient.execute(query, [userUuid, timestamp]);
+    await dbClient.execute(query, [userUuid, revision]);
 
-    log.info(`用户 ${userUuid} 的 last_synced_at 已成功更新为: ${timestamp}`);
+    log.info(`用户 ${userUuid} 的 last_synced_rev 已更新为: ${revision}`);
   } catch (error) {
-    log.error(`更新 last_synced_at 失败: ${error}`);
-    // 在实际应用中，这里可能需要向上抛出错误，以便同步流程可以回滚
+    log.error(`更新 last_synced_rev 失败: ${error}`);
     throw error;
   }
 }

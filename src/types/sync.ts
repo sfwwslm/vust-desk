@@ -33,6 +33,7 @@ export interface WebsiteGroupDto {
   description: string | null;
   sort_order: number | null;
   is_deleted: number;
+  rev: number;
   updated_at: string;
 }
 
@@ -51,6 +52,7 @@ export interface WebsitesDto {
   description: string | null;
   sort_order: number | null;
   is_deleted: number;
+  rev: number;
   updated_at: string;
 }
 
@@ -62,6 +64,7 @@ export interface AssetCategoryDto {
   name: string;
   is_default: number;
   is_deleted: number;
+  rev: number;
   updated_at: string;
 }
 
@@ -77,6 +80,7 @@ export interface AssetDto {
   expiration_date: string | null;
   description: string | null;
   is_deleted: number;
+  rev: number;
   updated_at: string;
   brand: string | null;
   model: string | null;
@@ -101,6 +105,8 @@ export interface SearchEngineDto {
   local_icon_path: string | null;
   is_default: number;
   sort_order: number | null;
+  is_deleted: number;
+  rev: number;
   updated_at: string;
 }
 
@@ -120,6 +126,7 @@ export interface SyncDataDto {
  * 服务器返回的完整同步数据结构，与 Rust 中的 `ServerSyncData` 对应。
  */
 export interface ServerSyncData {
+  current_synced_rev: number;
   current_synced_at: string;
   sync_data: SyncDataDto;
   icons_to_upload: string[]; // 需要客户端上传的图标文件名列表
@@ -129,6 +136,13 @@ export interface ServerSyncData {
   categories_count: number;
   assets_count: number;
   search_engines_count: number;
+  // 轻量同步摘要，便于 UI 展示
+  summary?: {
+    uploaded_chunks?: number;
+    downloaded_records?: number;
+    icon_uploads?: number;
+    icon_downloads?: number;
+  };
 }
 
 /**
@@ -137,7 +151,7 @@ export interface ServerSyncData {
  */
 export interface ClientSyncPayload {
   user_uuid: string;
-  last_synced_at: string;
+  last_synced_rev: number;
 }
 
 /**
@@ -146,6 +160,7 @@ export interface ClientSyncPayload {
  */
 export interface StartSyncResponse {
   session_id: string;
+  suggested_chunk_size?: number; // 服务器建议的分块大小
   // 未来可扩展字段，例如服务器建议的分块大小等
 }
 
