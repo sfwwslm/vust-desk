@@ -47,69 +47,9 @@ fn all_migrations() -> Vec<Migration> {
     vec![
         Migration {
             version: 1,
-            description: "create_users_table",
+            description: "baseline_schema",
             kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0001_users.sql"),
-        },
-        Migration {
-            version: 2,
-            description: "create_sync_metadata_table",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0002_sync_metadata.sql"),
-        },
-        Migration {
-            version: 3,
-            description: "create_website_groups_table",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0003_website_groups.sql"),
-        },
-        Migration {
-            version: 4,
-            description: "create_websites_table",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0004_websites.sql"),
-        },
-        Migration {
-            version: 5,
-            description: "create_asset_categories_table",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0005_asset_categories.sql"),
-        },
-        Migration {
-            version: 6,
-            description: "create_assets_table",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0006_assets.sql"),
-        },
-        Migration {
-            version: 7,
-            description: "create_search_engines",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0007_create_search_engines.sql"),
-        },
-        Migration {
-            version: 8,
-            description: "add_asset_sale_fields",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0008_assets_sale_fields.sql"),
-        },
-        Migration {
-            version: 9,
-            description: "add_rev_and_sync_rev",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0009_add_rev_and_sync_rev.sql"),
-        },
-        Migration {
-            version: 10,
-            description: "add_is_deleted_to_search_engines",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0010_add_is_deleted_to_search_engines.sql"),
-        },
-        Migration {
-            version: 11,
-            description: "create_sync_logs",
-            kind: MigrationKind::Up,
-            sql: include_str!("../../migrations/0011_create_sync_logs.sql"),
+            sql: include_str!("../../migrations/0001_baseline.sql"),
         },
     ]
 }
