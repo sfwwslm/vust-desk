@@ -1,5 +1,5 @@
 import { GlobalStyle } from "@/styles/GlobalStyles";
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Menus from "@/components/layout/Menus";
 import WindowControls from "@/components/layout/WindowControls";
@@ -11,7 +11,7 @@ import AppEventManager from "@/components/layout/AppEventManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllUsers, ANONYMOUS_USER_UUID } from "@/services/user";
 import UserIcon from "@/components/layout/UserIcon";
-import { warn } from "@tauri-apps/plugin-log";
+import { useDisableBrowserShortcuts } from "@/hooks/useDisableBrowserShortcuts";
 
 const AppContainer = styled.div`
   display: flex;
@@ -58,41 +58,7 @@ const AppLayout: React.FC = () => {
   const location = useLocation();
   const { activeUser, switchActiveUser } = useAuth();
 
-  /**
-   * @function handleKeyDown
-   * @description 禁用刷新和查找快捷键（F5、Ctrl/Meta + R、Ctrl + F）。
-   */
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    const key = event.key.toLowerCase();
-
-    // 禁用刷新
-    const isRefresh =
-      key === "f5" ||
-      (event.ctrlKey && key === "r") ||
-      (event.metaKey && key === "r");
-
-    // 禁用查找
-    const isSearch = event.ctrlKey && key === "f";
-
-    if (isRefresh || isSearch) {
-      event.preventDefault();
-      event.stopPropagation();
-      warn(
-        `${event.ctrlKey || event.metaKey ? "组合键" : ""} ${
-          event.key
-        } 已被阻止`
-      );
-    }
-  }, []);
-
-  /**
-   * @function handleContextMenu
-   * @description 处理右键菜单事件，禁用默认的浏览器菜单。
-   * @description 同样使用 useCallback 包装。
-   */
-  const handleContextMenu = useCallback((event: MouseEvent) => {
-    event.preventDefault();
-  }, []);
+  useDisableBrowserShortcuts();
 
   useEffect(() => {
     debug(`路由切换到：${location.pathname}`);
@@ -133,23 +99,10 @@ const AppLayout: React.FC = () => {
   }, []); // 空依赖数组确保只在启动时运行一次
 
   useEffect(() => {
-    if (import.meta.env.PROD) {
-      document.addEventListener("keydown", handleKeyDown);
-    }
-
-    document.addEventListener("contextmenu", handleContextMenu);
-
     if (import.meta.env.DEV) {
       attachConsole();
     }
-
-    return () => {
-      if (import.meta.env.PROD) {
-        document.removeEventListener("keydown", handleKeyDown);
-      }
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, [handleKeyDown, handleContextMenu]);
+  }, []);
 
   return (
     <AppContainer className="app-container">
