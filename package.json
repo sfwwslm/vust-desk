@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "prune": "ts-prune",
-    "td": "tauri dev --config src-tauri/Tauri.dev.toml",
+    "td": "tauri dev --config src-tauri/tauri.dev.json",
     "tb": "tauri build"
   },
   "dependencies": {
