@@ -23,6 +23,7 @@
     "fs:default",
     "notification:allow-request-permission",
     "notification:allow-notify",
+    "notification:allow-is-permission-granted",
     {
       "identifier": "fs:allow-write-text-file",
       "allow": [
