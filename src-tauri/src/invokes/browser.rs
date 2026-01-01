@@ -1,6 +1,6 @@
 //! 该模块提供与系统浏览器交互相关的功能，检测已安装的浏览器。
 
-#[cfg(target_os = "windows")]
+#[cfg(any(target_os = "windows", target_os = "macos"))]
 use std::path::PathBuf;
 
 #[cfg(target_os = "linux")]

@@ -63,7 +63,11 @@ pub fn update_tray_menu_items<R: Runtime>(
 ) -> tauri::Result<()> {
     let tray = app.tray_by_id("main_tray").unwrap();
 
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     let title = new_items.remove("title").unwrap_or_default();
+
+    #[cfg(target_os = "macos")]
+    let _ = new_items.remove("title");
 
     // 直接用栈上的 MenuItem<R>
     let mut menu_items = Vec::with_capacity(new_items.len());
