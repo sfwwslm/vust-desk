@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Menus from "@/components/layout/Menus";
 import WindowControls from "@/components/layout/WindowControls";
-import dragging from "@/utils/dragging";
 import { debug, attachConsole } from "@tauri-apps/plugin-log";
 import styled from "styled-components";
 import { AppProvider } from "@/contexts/AppProvider";
@@ -106,11 +105,11 @@ const AppLayout: React.FC = () => {
 
   return (
     <AppContainer className="app-container">
-      <AppHeader className="app-header" onMouseDown={dragging}>
-        <HeaderLeft className="header-left">
+      <AppHeader className="app-header" data-tauri-drag-region>
+        <HeaderLeft className="header-left" data-tauri-drag-region="false">
           <Menus />
         </HeaderLeft>
-        <HeaderRight className="header-right">
+        <HeaderRight className="header-right" data-tauri-drag-region="false">
           <UserIcon />
           <WindowControls />
         </HeaderRight>
