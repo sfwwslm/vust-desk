@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "cc.vust.desk",
+  "app": {
+    "enableGTKAppId": false,
+    "macOSPrivateApi": true,
+    "security": {
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      },
+      "capabilities": [],
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": false,
+      "pattern": {
+        "use": "brownfield"
+      }
+    },
+    "windows": [],
+    "withGlobalTauri": false
+  }
+}
