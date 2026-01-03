@@ -90,6 +90,9 @@ jobs:
           - platform: "windows-latest"
             # 定义 Windows 平台需要上传的产物路径
             dist: "src-tauri/target/release/bundle"
+          - platform: "macos-latest"
+            # 定义 macOS 平台需要上传的产物路径
+            dist: "src-tauri/target/release/bundle"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -157,5 +160,19 @@ jobs:
           }
 
           gh release upload ${{ inputs.release_tag }} $files --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: macOS - Upload Artifacts
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find "${{ matrix.dist }}" -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.sig" \))
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No artifacts found to upload."
+            exit 1
+          fi
+          gh release upload "${{ inputs.release_tag }}" "${files[@]}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
