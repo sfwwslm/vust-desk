@@ -18,6 +18,12 @@
       "update": "Check for Updates",
       "changelog": "Changelog",
       "about": "About"
+    },
+    "edit": {
+      "title": "Edit"
+    },
+    "window": {
+      "title": "Window"
     }
   },
   "tray": {

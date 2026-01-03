@@ -18,6 +18,12 @@
       "update": "检查更新",
       "changelog": "更新日志",
       "about": "关于"
+    },
+    "edit": {
+      "title": "编辑"
+    },
+    "window": {
+      "title": "窗口"
     }
   },
   "tray": {

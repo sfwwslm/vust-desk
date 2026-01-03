@@ -134,10 +134,10 @@ const createUserMenu = async (
     ],
   });
 
-const createEditMenu = async () =>
+const createEditMenu = async (menuLabel: string) =>
   Submenu.new({
     id: "edit-menu",
-    text: "Edit",
+    text: menuLabel,
     items: [
       await PredefinedMenuItem.new({ item: "Undo" }),
       await PredefinedMenuItem.new({ item: "Redo" }),
@@ -149,10 +149,10 @@ const createEditMenu = async () =>
     ],
   });
 
-const createWindowMenu = async () =>
+const createWindowMenu = async (menuLabel: string) =>
   Submenu.new({
     id: "window-menu",
-    text: "Window",
+    text: menuLabel,
     items: [
       await PredefinedMenuItem.new({ item: "Minimize" }),
       await PredefinedMenuItem.new({ item: "Fullscreen" }),
@@ -198,8 +198,8 @@ export const useMacAppMenu = () => {
           t("menu.account.profile"),
           () => openUserProfileModal(openModal)
         );
-        const editMenu = await createEditMenu();
-        const windowMenu = await createWindowMenu();
+        const editMenu = await createEditMenu(t("menu.edit.title"));
+        const windowMenu = await createWindowMenu(t("menu.window.title"));
 
         const navigationSubmenus = await Promise.all(
           otherMenus.map(async (menu) => {
