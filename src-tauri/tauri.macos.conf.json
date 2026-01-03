@@ -1,6 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "identifier": "cc.vust.desk",
+  "bundle": { "targets": ["app", "dmg"] },
   "app": {
     "enableGTKAppId": false,
     "macOSPrivateApi": true,
@@ -18,21 +19,10 @@
     },
     "windows": [
       {
-        "title": "Vust Desk",
-        "width": 1024,
-        "height": 768,
-        "minWidth": 1024,
-        "minHeight": 768,
         "decorations": true,
-        "visible": false,
         "transparent": false
       }
     ],
     "withGlobalTauri": false
-  },
-  "plugins": {
-    "fs": {
-      "requireLiteralLeadingDot": false
-    }
   }
 }
