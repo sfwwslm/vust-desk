@@ -10,6 +10,9 @@
     "tauri": "tauri",
     "prune": "ts-prune",
     "td": "tauri dev --config src-tauri/tauri.dev.json",
+    "tw": "tauri dev --config src-tauri/tauri.windows.conf.json",
+    "tm": "tauri dev --config src-tauri/tauri.macos.conf.json",
+    "tl": "tauri dev --config src-tauri/tauri.linux.conf.json",
     "tb": "tauri build"
   },
   "dependencies": {
