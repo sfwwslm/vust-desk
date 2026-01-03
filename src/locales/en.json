@@ -1,6 +1,13 @@
 {
   "menu": {
     "navigation": "Panel",
+    "app": {
+      "toggleTheme": "Toggle Theme"
+    },
+    "account": {
+      "entry": "Account",
+      "profile": "Profile Panel"
+    },
     "admin": {
       "title": "Admin",
       "assets": "Assets"

@@ -1,6 +1,13 @@
 {
   "menu": {
     "navigation": "导航",
+    "app": {
+      "toggleTheme": "切换主题"
+    },
+    "account": {
+      "entry": "用户",
+      "profile": "用户面板"
+    },
     "admin": {
       "title": "管理",
       "assets": "资产"

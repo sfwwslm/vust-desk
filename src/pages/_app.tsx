@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getAllUsers, ANONYMOUS_USER_UUID } from "@/services/user";
 import UserIcon from "@/components/layout/UserIcon";
 import { useDisableBrowserShortcuts } from "@/hooks/useDisableBrowserShortcuts";
+import { useMacAppMenu } from "@/hooks/useMacAppMenu";
 
 const AppContainer = styled.div`
   display: flex;
@@ -56,8 +57,13 @@ const AppMain = styled.main`
 const AppLayout: React.FC = () => {
   const location = useLocation();
   const { activeUser, switchActiveUser } = useAuth();
+  const isMacOS =
+    typeof navigator !== "undefined" &&
+    (navigator.platform.toLowerCase().includes("mac") ||
+      navigator.userAgent.toLowerCase().includes("mac"));
 
   useDisableBrowserShortcuts();
+  useMacAppMenu();
 
   useEffect(() => {
     debug(`路由切换到：${location.pathname}`);
@@ -105,15 +111,19 @@ const AppLayout: React.FC = () => {
 
   return (
     <AppContainer className="app-container">
-      <AppHeader className="app-header" data-tauri-drag-region>
-        <HeaderLeft className="header-left" data-tauri-drag-region="false">
-          <Menus />
-        </HeaderLeft>
-        <HeaderRight className="header-right" data-tauri-drag-region="false">
-          <UserIcon />
-          <WindowControls />
-        </HeaderRight>
-      </AppHeader>
+      {!isMacOS && (
+        <AppHeader className="app-header" data-tauri-drag-region>
+          <HeaderLeft className="header-left" data-tauri-drag-region="false">
+            <Menus />
+          </HeaderLeft>
+          <HeaderRight className="header-right" data-tauri-drag-region="false">
+            <UserIcon />
+            <div className="window-controls-wrapper" style={{ height: "100%" }}>
+              <WindowControls />
+            </div>
+          </HeaderRight>
+        </AppHeader>
+      )}
       <AppMain className="app-main">
         <Outlet />
       </AppMain>

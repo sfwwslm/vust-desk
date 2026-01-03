@@ -20,6 +20,7 @@ const el = document.getElementById("root")!;
 // Top-level await is not available in the configured target environment
 (async () => {
   try {
+    applyPlatformClass();
     await ensureAppRootDirExists();
 
     await Promise.all([
@@ -97,4 +98,19 @@ function renderError(error: Error) {
       <InitializationError error={error} />
     </React.StrictMode>
   );
+}
+
+function applyPlatformClass() {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const isMac =
+    navigator.platform.toLowerCase().includes("mac") ||
+    navigator.userAgent.toLowerCase().includes("mac");
+
+  if (isMac) {
+    document.documentElement.classList.add("is-macos");
+    document.body.classList.add("is-macos");
+  }
 }

@@ -6,8 +6,8 @@
     "macOSPrivateApi": true,
     "security": {
       "assetProtocol": {
-        "enable": false,
-        "scope": []
+        "enable": true,
+        "scope": ["$HOME/.vust/**"]
       },
       "capabilities": [],
       "dangerousDisableAssetCspModification": false,
@@ -16,7 +16,23 @@
         "use": "brownfield"
       }
     },
-    "windows": [],
+    "windows": [
+      {
+        "title": "Vust Desk",
+        "width": 1024,
+        "height": 768,
+        "minWidth": 1024,
+        "minHeight": 768,
+        "decorations": true,
+        "visible": false,
+        "transparent": false
+      }
+    ],
     "withGlobalTauri": false
+  },
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
   }
 }
