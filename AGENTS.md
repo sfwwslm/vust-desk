@@ -38,9 +38,10 @@
 
 ## Security & Configuration Tips
 
-- User data lives under `~/.vust/` (`config.json`, `data/` for SQLite, `icons/` cache); avoid hardcoding secrets or paths.
+- User data lives under `appDataDir` (`config.json`, `data/` for SQLite, `icons/` cache); avoid hardcoding secrets or paths.
 - When adding new plugins or filesystem access, document required permissions and defaults in `docs/` and the PR description.
 
 ## Communication
 
 - Please respond in Chinese by default.
+- CHANGELOG entries should be user-facing; avoid implementation details and internal refactors.
