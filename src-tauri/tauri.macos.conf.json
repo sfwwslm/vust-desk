@@ -19,6 +19,7 @@
     },
     "windows": [
       {
+        "title": "Vust Desk",
         "decorations": true,
         "transparent": false
       }
