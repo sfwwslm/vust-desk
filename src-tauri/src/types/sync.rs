@@ -18,7 +18,7 @@ pub struct WebsiteGroupDto {
     pub sort_order: Option<i64>, // Rust 中对应 SQLite 的 INTEGER
     pub is_deleted: i64,         // 对应 SQLite 的 INTEGER (0 或 1)
     pub rev: i64,
-    pub updated_at: String,      // ISO 8601 格式的字符串
+    pub updated_at: String, // ISO 8601 格式的字符串
 }
 
 #[derive(Serialize, Deserialize, Debug)]
