@@ -103,7 +103,7 @@ export default function CheckUpdatePage() {
         });
       }
     },
-    [closeModal, openAlert, t]
+    [closeModal, openAlert, t],
   );
 
   const startDownload = useCallback(
@@ -137,20 +137,22 @@ export default function CheckUpdatePage() {
                 info(
                   t("help.checkUpdatePage.downloadStartLog", {
                     size: (totalLength / 1024 / 1024).toFixed(2),
-                  })
+                  }),
                 );
                 onProgress(
-                  t("help.checkUpdatePage.downloadingProgress", { progress: 0 })
+                  t("help.checkUpdatePage.downloadingProgress", {
+                    progress: 0,
+                  }),
                 );
                 break;
               case "Progress":
                 downloadedLength += event.data.chunkLength;
                 if (totalLength > 0) {
                   const progress = Math.round(
-                    (downloadedLength / totalLength) * 100
+                    (downloadedLength / totalLength) * 100,
                   );
                   onProgress(
-                    t("help.checkUpdatePage.downloadingProgress", { progress })
+                    t("help.checkUpdatePage.downloadingProgress", { progress }),
                   );
                 }
                 break;
@@ -166,7 +168,7 @@ export default function CheckUpdatePage() {
                 break;
             }
           },
-          options
+          options,
         );
         setUnlisten(() => unlistenFn);
       } catch (error) {
@@ -186,7 +188,7 @@ export default function CheckUpdatePage() {
       installAndRelaunch,
       openAlert,
       t,
-    ]
+    ],
   );
 
   const checkUpdate = useCallback(async () => {

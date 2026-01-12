@@ -113,7 +113,7 @@ const PersonalizationSettings: React.FC = () => {
   }, []);
 
   const handleAutostartToggle = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const shouldEnable = e.target.checked;
     try {
@@ -130,7 +130,7 @@ const PersonalizationSettings: React.FC = () => {
   };
 
   const handleStartMinimizedToggle = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const shouldEnable = e.target.checked;
     await setStartMinimized(shouldEnable);
@@ -138,7 +138,7 @@ const PersonalizationSettings: React.FC = () => {
   };
 
   const handleMinimizeOnCloseToggle = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const shouldEnable = e.target.checked;
     await setMinimizeToTrayOnClose(shouldEnable);

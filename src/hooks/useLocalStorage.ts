@@ -10,7 +10,7 @@ import { useState, useEffect, Dispatch, SetStateAction } from "react";
  */
 function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, Dispatch<SetStateAction<T>>] {
   // 使用函数式更新，确保只在组件首次渲染时执行一次 localStorage 读取操作
   const [storedValue, setStoredValue] = useState<T>(() => {

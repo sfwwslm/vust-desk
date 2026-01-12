@@ -20,7 +20,9 @@ export const SelectedValue = styled.div<{ $isOpen: boolean; theme: Theme }>`
   border-radius: ${(props) => props.theme.radii.base};
   cursor: pointer;
   color: ${(props) => props.theme.colors.textPrimary};
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition:
+    border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
   box-shadow: ${(props) =>
     props.$isOpen ? `0 0 0 3px ${props.theme.colors.primaryFocus}` : "none"};
 
@@ -76,8 +78,8 @@ export const OptionItem = styled(motion.li)<{
     props.$isDisabled
       ? props.theme.colors.textHint
       : props.$isSelected
-      ? "white"
-      : props.theme.colors.textPrimary};
+        ? "white"
+        : props.theme.colors.textPrimary};
   font-weight: ${(props) => (props.$isSelected ? "bold" : "normal")};
 
   &:hover {

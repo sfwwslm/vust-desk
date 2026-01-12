@@ -180,7 +180,7 @@ const renderNode = (node: ChangelogNode): JSX.Element => {
               {renderSegments(listItem.content)}
             </ListItem>
           ))}
-        </List>
+        </List>,
       );
       currentListItems = []; // 清空累积的列表项
     }
@@ -224,7 +224,7 @@ const ChangelogPage: React.FC = () => {
   // 仅在初始化时解析一次 changelog 内容
   const parsedTree = useMemo(
     () => parseChangelogTree(__CHANGELOG_CONTENT__).slice(0, 7),
-    []
+    [],
   );
 
   return (

@@ -82,16 +82,16 @@ const AppLayout: React.FC = () => {
 
       const allDbUsers = await getAllUsers();
       const activeUserExistsInDb = allDbUsers.some(
-        (user) => user.uuid === activeUser.uuid
+        (user) => user.uuid === activeUser.uuid,
       );
 
       // 如果活动用户在数据库中不存在，则切换回匿名用户
       if (!activeUserExistsInDb) {
         debug(
-          `活动用户 "${activeUser.username}" 在数据库中不存在，已自动切换回匿名用户。`
+          `活动用户 "${activeUser.username}" 在数据库中不存在，已自动切换回匿名用户。`,
         );
         const anonymousUser = allDbUsers.find(
-          (u) => u.uuid === ANONYMOUS_USER_UUID
+          (u) => u.uuid === ANONYMOUS_USER_UUID,
         );
         if (anonymousUser) {
           switchActiveUser(anonymousUser);

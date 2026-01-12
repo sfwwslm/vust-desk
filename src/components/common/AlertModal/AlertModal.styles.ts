@@ -12,7 +12,8 @@ export const AlertTitle = styled(ModalTitle)<{ theme: Theme }>`
   font-size: 1.6rem;
   margin-bottom: calc(${(props) => props.theme.spacing.unit} * 2);
   color: ${(props) =>
-    props.theme.colors.primary}; /* 使用主色调，也可以根据需要换成警告或错误色 */
+    props.theme.colors
+      .primary}; /* 使用主色调，也可以根据需要换成警告或错误色 */
 `;
 
 export const AlertMessage = styled.p<{ theme: Theme }>`

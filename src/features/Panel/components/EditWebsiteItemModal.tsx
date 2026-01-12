@@ -18,7 +18,7 @@ interface EditWebsiteItemModalProps {
 
 const getInitialItem = (
   item: WebsiteItem | null,
-  targetGroupUuid?: string | null
+  targetGroupUuid?: string | null,
 ): Partial<WebsiteItem> => {
   if (item) {
     return item;
@@ -46,7 +46,7 @@ const EditWebsiteItemModal: React.FC<EditWebsiteItemModalProps> = ({
   const { t } = useTranslation();
   const { openAlert } = useModal();
   const [editedItem, setEditedItem] = useState<Partial<WebsiteItem>>(
-    getInitialItem(item, targetGroupUuid)
+    getInitialItem(item, targetGroupUuid),
   );
   const { triggerIconRefresh } = useIconRefresh();
 
@@ -60,11 +60,11 @@ const EditWebsiteItemModal: React.FC<EditWebsiteItemModalProps> = ({
     (field: keyof WebsiteItem, value: string | number | null | undefined) => {
       setEditedItem((prev) => ({ ...prev, [field]: value }));
     },
-    []
+    [],
   );
 
   const validateItem = (
-    itemToValidate: Partial<WebsiteItem>
+    itemToValidate: Partial<WebsiteItem>,
   ): string | null => {
     if (!itemToValidate.title?.trim()) {
       return t("panel.errorTitleRequired");

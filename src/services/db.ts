@@ -127,7 +127,7 @@ export const dbClient = {
 export async function getDefaultCategoryUuid(): Promise<string | null> {
   const categories = await dbClient.select<{ uuid: string }>(
     `SELECT uuid FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = $2`,
-    [ANONYMOUS_USER_UUID, 1]
+    [ANONYMOUS_USER_UUID, 1],
   );
   return categories[0]?.uuid || null;
 }
@@ -136,11 +136,11 @@ export async function getDefaultCategoryUuid(): Promise<string | null> {
  *  通过用户uuid查找资产分类的uuid
  */
 export async function getCategoryUuidForUser(
-  userUuid: string
+  userUuid: string,
 ): Promise<string | null> {
   const categories = await dbClient.select<{ uuid: string }>(
     `SELECT uuid FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1`,
-    [userUuid]
+    [userUuid],
   );
   return categories[0]?.uuid || null;
 }
@@ -149,11 +149,11 @@ export async function getCategoryUuidForUser(
  *  通过用户的uuid获取默认资产分类uuid
  */
 export async function getDefaultCategoryUuidForUser(
-  userUuid: string
+  userUuid: string,
 ): Promise<string | null> {
   const categories = await dbClient.select<{ uuid: string }>(
     `SELECT uuid FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = 1`,
-    [userUuid]
+    [userUuid],
   );
   return categories[0]?.uuid || null;
 }
@@ -167,23 +167,23 @@ async function _ensureDefaultCategoryExists(userUuid: string): Promise<void> {
   // 通过 is_default 标志检查，而不是通过名称
   const existing = await dbClient.select(
     `SELECT 1 FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = 1`,
-    [userUuid]
+    [userUuid],
   );
   if (existing.length === 0) {
     const defaultCategoryName = i18n.t(
-      "management.asset.category.defaultCategory"
+      "management.asset.category.defaultCategory",
     );
 
     const randomUuid = crypto.randomUUID();
     log.info(
       `【${await getUsernameByUuid(
-        userUuid
-      )}】用户的默认资产分类不存在，正在创建【${defaultCategoryName}】分类，uuid：${randomUuid}`
+        userUuid,
+      )}】用户的默认资产分类不存在，正在创建【${defaultCategoryName}】分类，uuid：${randomUuid}`,
     );
     // 插入时设置 is_default = 1
     await dbClient.execute(
       `INSERT INTO ${ASSET_CATEGORIES_TABLE_NAME} (uuid, user_uuid, name, is_default) VALUES ($1, $2, $3, 1)`,
-      [randomUuid, userUuid, defaultCategoryName]
+      [randomUuid, userUuid, defaultCategoryName],
     );
   }
 }
@@ -205,13 +205,13 @@ export async function initDb(): Promise<string> {
     try {
       const users = await dbClient.select(
         "SELECT 1 FROM users WHERE uuid = $1",
-        [ANONYMOUS_USER_UUID]
+        [ANONYMOUS_USER_UUID],
       );
       if (users.length === 0) {
         log.info(`匿名用户不存在，正在创建【${ANONYMOUS_USER}】用户...`);
         await dbClient.execute(
           "INSERT INTO users (uuid, username, is_logged_in) VALUES ($1, $2, 1)", // 匿名用户始终是登录状态
-          [ANONYMOUS_USER_UUID, ANONYMOUS_USER]
+          [ANONYMOUS_USER_UUID, ANONYMOUS_USER],
         );
       }
 
@@ -236,7 +236,7 @@ export async function initDb(): Promise<string> {
 export async function saveUser(user: User): Promise<void> {
   const existingUser = await dbClient.select(
     "SELECT 1 FROM users WHERE uuid = $1",
-    [user.uuid]
+    [user.uuid],
   );
 
   if (existingUser.length === 0) {
@@ -248,7 +248,7 @@ export async function saveUser(user: User): Promise<void> {
         user.serverAddress,
         user.serverInstanceUuid,
         user.token,
-      ]
+      ],
     );
     // 新用户保存后，也为他们创建默认分类
     await _ensureDefaultCategoryExists(user.uuid);
@@ -263,7 +263,7 @@ export async function saveUser(user: User): Promise<void> {
         user.serverInstanceUuid,
         user.token,
         user.uuid,
-      ]
+      ],
     );
   }
 }

@@ -42,7 +42,7 @@ interface WebsiteItemFormProps {
   groups: WebsiteGroup[];
   onItemChange: (
     field: keyof WebsiteItem,
-    value: string | number | null | undefined
+    value: string | number | null | undefined,
   ) => void;
   onSubmit: (e: React.FormEvent) => void;
   onFetchSuccess: () => void;
@@ -280,8 +280,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
               {isIconInvalid
                 ? t("panel.iconSource.errorIconMissing")
                 : item.icon_source === "user_uploaded"
-                ? t("panel.iconSource.userUploaded")
-                : t("panel.iconSource.autoFetched")}
+                  ? t("panel.iconSource.userUploaded")
+                  : t("panel.iconSource.autoFetched")}
             </span>
           </IconDisplayWrapper>
         ) : (

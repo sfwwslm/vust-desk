@@ -43,7 +43,7 @@ export const PanelSettingsProvider = ({
 }) => {
   const [sideMargin, setSideMargin] = useLocalStorage<number>(
     "panelContentSideMargin",
-    5 // 默认值为 5%
+    5, // 默认值为 5%
   );
 
   return (
@@ -69,7 +69,7 @@ export const usePanelSettings = () => {
   const context = useContext(PanelSettingsContext);
   if (context === undefined) {
     throw new Error(
-      "usePanelSettings must be used within a PanelSettingsProvider"
+      "usePanelSettings must be used within a PanelSettingsProvider",
     );
   }
   return context;

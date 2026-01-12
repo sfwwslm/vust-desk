@@ -58,7 +58,7 @@ interface RequestOptions extends RequestInit {
  */
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<T> {
   // 在请求发起前，从 localStorage 动态获取当前用户信息
   const activeUser = getActiveUserFromStorage();
@@ -114,7 +114,7 @@ export async function apiClient<T>(
       throw new HttpError(
         `服务器响应错误: ${response.statusText}`,
         response.status,
-        errorBody
+        errorBody,
       );
     }
 

@@ -98,7 +98,7 @@ const PanelPageContent: React.FC = () => {
   const [allSearchEngines, setAllSearchEngines] = useState<SearchEngine[]>([]);
   const [activeEngineUuid, setActiveEngineUuid] = useLocalStorage<string>(
     "activeSearchEngineUuid",
-    "bing-builtin"
+    "bing-builtin",
   );
   const [isEngineModalOpen, setIsEngineModalOpen] = useState(false);
 
@@ -119,7 +119,7 @@ const PanelPageContent: React.FC = () => {
       activationConstraint: {
         distance: 8,
       },
-    })
+    }),
   );
 
   const showAlert = (title: string, message: string) => {
@@ -130,7 +130,7 @@ const PanelPageContent: React.FC = () => {
     if (!activeUser?.uuid) return;
     const customEngines = await panelDb.getSearchEngines(activeUser.uuid);
     const dbDefaultEngine = await panelDb.getDefaultSearchEngine(
-      activeUser.uuid
+      activeUser.uuid,
     );
     const combined = [...builtInSearchEngines, ...customEngines];
     setAllSearchEngines(combined);
@@ -206,7 +206,7 @@ const PanelPageContent: React.FC = () => {
         log.error("Failed to open URL:", error);
         showAlert(
           "打开链接失败",
-          `无法打开 URL "${url}"。\n\n错误详情: ${error.message || error}`
+          `无法打开 URL "${url}"。\n\n错误详情: ${error.message || error}`,
         );
       }
     } else {
@@ -227,14 +227,14 @@ const PanelPageContent: React.FC = () => {
         }
         dataToSave.user_uuid = activeUser.uuid;
         const itemsInGroup = items.filter(
-          (i) => i.group_uuid === dataToSave.group_uuid
+          (i) => i.group_uuid === dataToSave.group_uuid,
         );
         dataToSave.sort_order = itemsInGroup.length;
       }
       await panelDb.saveItem(dataToSave);
       await loadData();
     },
-    [loadData, items, activeUser, showAlert]
+    [loadData, items, activeUser, showAlert],
   );
 
   const handleContextMenu = (e: React.MouseEvent, item: WebsiteItem) => {
@@ -264,10 +264,10 @@ const PanelPageContent: React.FC = () => {
     if (over && active.id !== over.id) {
       setItems((currentItems) => {
         const oldIndex = currentItems.findIndex(
-          (item) => item.uuid === active.id
+          (item) => item.uuid === active.id,
         );
         const newIndex = currentItems.findIndex(
-          (item) => item.uuid === over.id
+          (item) => item.uuid === over.id,
         );
 
         // 确保拖拽在同一个分组内
@@ -319,7 +319,7 @@ const PanelPageContent: React.FC = () => {
       .map((group) => {
         // 获取当前分组下的所有网站项
         const itemsInGroup = items.filter(
-          (item) => item.group_uuid === group.uuid
+          (item) => item.group_uuid === group.uuid,
         );
 
         // 检查分组名称是否匹配
@@ -327,7 +327,7 @@ const PanelPageContent: React.FC = () => {
 
         // 筛选出标题匹配的网站项
         const matchingItems = itemsInGroup.filter((item) =>
-          item.title.toLowerCase().includes(lowerSearchTerm)
+          item.title.toLowerCase().includes(lowerSearchTerm),
         );
         // 如果分组名称匹配，则返回该分组和它的所有网站项
         if (isGroupMatch) {
@@ -342,7 +342,7 @@ const PanelPageContent: React.FC = () => {
       })
       .filter(
         (group): group is WebsiteGroup & { items: WebsiteItem[] } =>
-          group !== null
+          group !== null,
       );
   }, [groups, items, searchTerm]);
 

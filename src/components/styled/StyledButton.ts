@@ -37,8 +37,7 @@ const variants = {
     &:hover {
       transform: translateY(-2px);
       filter: brightness(1.1);
-      box-shadow: 0 5px 15px
-        ${(props) => props.theme.colors.primaryFocus};
+      box-shadow: 0 5px 15px ${(props) => props.theme.colors.primaryFocus};
     }
   `,
   secondary: css`
@@ -52,7 +51,8 @@ const variants = {
     &:hover {
       transform: translateY(-2px);
       filter: brightness(1.1);
-      box-shadow: 0 3px 10px ${(props) => props.theme.colors.secondaryTransparent};
+      box-shadow: 0 3px 10px
+        ${(props) => props.theme.colors.secondaryTransparent};
     }
   `,
   danger: css`

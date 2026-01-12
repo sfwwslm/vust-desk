@@ -21,7 +21,9 @@ const inputStyles = css<{ theme: Theme }>`
   background-color: ${(props) => props.theme.colors.background};
   color: ${(props) => props.theme.colors.textPrimary};
   font-size: ${(props) => props.theme.typography.fontSizeBase};
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
   height: calc(${(props) => props.theme.spacing.unit} * 5);
   box-sizing: border-box;
 

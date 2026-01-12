@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
   const [themeName, setThemeName] = useLocalStorage<"light" | "dark">(
     "appTheme",
-    "dark"
+    "dark",
   );
 
   const toggleTheme = () => {

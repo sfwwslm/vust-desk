@@ -106,7 +106,8 @@ export const MenuItem = styled.li<{ $isActive: boolean; theme: Theme }>`
   border-radius: ${(props) => props.theme.radii.base};
   background-color: ${(props) =>
     props.$isActive ? props.theme.colors.primary : "transparent"};
-  color: ${(props) => (props.$isActive ? "white" : props.theme.colors.textPrimary)};
+  color: ${(props) =>
+    props.$isActive ? "white" : props.theme.colors.textPrimary};
   font-weight: ${(props) => (props.$isActive ? "bold" : "normal")};
   margin-bottom: ${(props) => props.theme.spacing.unit};
   transition: all 0.2s ease-in-out;

@@ -94,7 +94,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
 
@@ -130,13 +130,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
       sale_date: markAsSold
         ? prev.sale_date || getCurrentDateFormatted()
         : null,
-      sale_price: markAsSold
-        ? prev.sale_price ?? prev.price ?? ""
-        : null,
-      fees: markAsSold ? prev.fees ?? 0 : 0,
+      sale_price: markAsSold ? (prev.sale_price ?? prev.price ?? "") : null,
+      fees: markAsSold ? (prev.fees ?? 0) : 0,
       buyer: markAsSold ? prev.buyer || "" : "",
       notes: markAsSold ? prev.notes || "" : "",
-      realized_profit: markAsSold ? prev.realized_profit ?? null : null,
+      realized_profit: markAsSold ? (prev.realized_profit ?? null) : null,
     }));
   }, [markAsSold]);
 
@@ -313,17 +311,17 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
           value={asset.purchase_date || ""}
           onChange={handleChange}
           required
-      />
-      {errors.purchaseDate && (
-        <ErrorMessage>{errors.purchaseDate}</ErrorMessage>
-      )}
-    </FormGroup>
+        />
+        {errors.purchaseDate && (
+          <ErrorMessage>{errors.purchaseDate}</ErrorMessage>
+        )}
+      </FormGroup>
 
-    <FormGroup>
-      <Label htmlFor="brand">{t("management.asset.brandOptional")}</Label>
-      <Input
-        type="text"
-        id="brand"
+      <FormGroup>
+        <Label htmlFor="brand">{t("management.asset.brandOptional")}</Label>
+        <Input
+          type="text"
+          id="brand"
           name="brand"
           value={asset.brand || ""}
           onChange={handleChange}
@@ -348,101 +346,101 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
       </FormGroup>
 
       <FormGroup>
-        <Label htmlFor="mark_sold">{t("management.asset.sellStatusLabel")}</Label>
-        <div
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-        >
+        <Label htmlFor="mark_sold">
+          {t("management.asset.sellStatusLabel")}
+        </Label>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <input
-          id="mark_sold"
-          type="checkbox"
-          checked={markAsSold}
-          onChange={(e) => setMarkAsSold(e.target.checked)}
-        />
-        <span>
-          {markAsSold
-            ? t("management.asset.markedSold")
-            : t("management.asset.markSold")}
-        </span>
-      </div>
-    </FormGroup>
-
-    {markAsSold && (
-      <>
-        <FormGroup>
-          <Label htmlFor="sale_price">
-            {t("management.asset.salePrice")}
-          </Label>
-          <Input
-            type="number"
-            step="any"
-            id="sale_price"
-            name="sale_price"
-            value={asset.sale_price ?? ""}
-            onChange={handleChange}
-            min="0"
-            required={markAsSold}
+            id="mark_sold"
+            type="checkbox"
+            checked={markAsSold}
+            onChange={(e) => setMarkAsSold(e.target.checked)}
           />
-          {errors.sale_price && (
-            <ErrorMessage>{errors.sale_price}</ErrorMessage>
-          )}
-        </FormGroup>
+          <span>
+            {markAsSold
+              ? t("management.asset.markedSold")
+              : t("management.asset.markSold")}
+          </span>
+        </div>
+      </FormGroup>
 
-        <FormGroup>
-          <Label htmlFor="sale_date">{t("management.asset.saleDate")}</Label>
-          <Input
-            type="date"
-            id="sale_date"
-            name="sale_date"
-            value={asset.sale_date || ""}
-            onChange={handleChange}
-            required={markAsSold}
-          />
-          {errors.sale_date && (
-            <ErrorMessage>{errors.sale_date}</ErrorMessage>
-          )}
-        </FormGroup>
+      {markAsSold && (
+        <>
+          <FormGroup>
+            <Label htmlFor="sale_price">
+              {t("management.asset.salePrice")}
+            </Label>
+            <Input
+              type="number"
+              step="any"
+              id="sale_price"
+              name="sale_price"
+              value={asset.sale_price ?? ""}
+              onChange={handleChange}
+              min="0"
+              required={markAsSold}
+            />
+            {errors.sale_price && (
+              <ErrorMessage>{errors.sale_price}</ErrorMessage>
+            )}
+          </FormGroup>
 
-        <FormGroup>
-          <Label htmlFor="fees">{t("management.asset.saleFees")}</Label>
-          <Input
-            type="number"
-            step="any"
-            id="fees"
-            name="fees"
-            value={asset.fees ?? 0}
-            onChange={handleChange}
-            min="0"
-          />
-          {errors.fees && <ErrorMessage>{errors.fees}</ErrorMessage>}
-        </FormGroup>
+          <FormGroup>
+            <Label htmlFor="sale_date">{t("management.asset.saleDate")}</Label>
+            <Input
+              type="date"
+              id="sale_date"
+              name="sale_date"
+              value={asset.sale_date || ""}
+              onChange={handleChange}
+              required={markAsSold}
+            />
+            {errors.sale_date && (
+              <ErrorMessage>{errors.sale_date}</ErrorMessage>
+            )}
+          </FormGroup>
 
-        <FormGroup>
-          <Label htmlFor="buyer">
-            {t("management.asset.buyerNotesOptional")}
-          </Label>
-          <Textarea
-            id="buyer"
-            name="buyer"
-            value={asset.buyer || ""}
-            onChange={handleChange}
-            rows={3}
-          />
-        </FormGroup>
+          <FormGroup>
+            <Label htmlFor="fees">{t("management.asset.saleFees")}</Label>
+            <Input
+              type="number"
+              step="any"
+              id="fees"
+              name="fees"
+              value={asset.fees ?? 0}
+              onChange={handleChange}
+              min="0"
+            />
+            {errors.fees && <ErrorMessage>{errors.fees}</ErrorMessage>}
+          </FormGroup>
 
-        <FormGroup>
-          <Label htmlFor="notes">
-            {t("management.asset.saleNotesOptional")}
-          </Label>
-          <Textarea
-            id="notes"
-            name="notes"
-            value={asset.notes || ""}
-            onChange={handleChange}
-            rows={3}
-          />
-        </FormGroup>
-      </>
-    )}
+          <FormGroup>
+            <Label htmlFor="buyer">
+              {t("management.asset.buyerNotesOptional")}
+            </Label>
+            <Textarea
+              id="buyer"
+              name="buyer"
+              value={asset.buyer || ""}
+              onChange={handleChange}
+              rows={3}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="notes">
+              {t("management.asset.saleNotesOptional")}
+            </Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={asset.notes || ""}
+              onChange={handleChange}
+              rows={3}
+            />
+          </FormGroup>
+        </>
+      )}
 
       <FormGroup id="description-form-group">
         <Label htmlFor="description">{t("common.descriptionOptional")}</Label>
@@ -456,9 +454,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ initialData, onSubmit }) => {
         />
       </FormGroup>
 
-  <div className="submit-button-container">
-    <SubmitButton
-      type="submit"
+      <div className="submit-button-container">
+        <SubmitButton
+          type="submit"
           disabled={
             Object.keys(errors).length > 0 &&
             Object.values(errors).some((err) => err !== "")

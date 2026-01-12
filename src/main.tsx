@@ -86,7 +86,7 @@ async function renderApp() {
       <Suspense fallback={<Loading />}>
         <Routes />
       </Suspense>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }
 
@@ -96,7 +96,7 @@ function renderError(error: Error) {
   root.render(
     <React.StrictMode>
       <InitializationError error={error} />
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }
 

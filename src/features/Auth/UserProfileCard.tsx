@@ -107,7 +107,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ onClose }) => {
    * 此状态用于决定在匿名用户视图下是否显示“切换账户”按钮。
    */
   const hasSwitchableUsers = availableUsers.some(
-    (u) => u.uuid !== ANONYMOUS_USER_UUID
+    (u) => u.uuid !== ANONYMOUS_USER_UUID,
   );
 
   // --- 事件处理函数 ---
@@ -153,7 +153,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ onClose }) => {
       (close) => <AccountSwitcherModal isOpen={true} onClose={close} />,
       {
         key: "account-switcher",
-      }
+      },
     );
   };
 
@@ -208,13 +208,13 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ onClose }) => {
               <IoSyncOutline style={{ marginRight: "8px" }} />
               {isSyncing ? t("account.syncing") : t("account.dataSync")}
             </StyledButton>
-            
+
             {/* 切换账户按钮 */}
             <StyledButton variant="secondary" onClick={openAccountSwitcher}>
               <MdOutlineSwitchAccount style={{ marginRight: "8px" }} />
               {t("account.switchAccount.title")}
             </StyledButton>
-            
+
             {/* 登出按钮 */}
             <StyledButton variant="danger" onClick={handleLogout}>
               {t("account.logoutButton")}

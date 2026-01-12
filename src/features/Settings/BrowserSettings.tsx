@@ -33,7 +33,7 @@ const BrowserSettings: React.FC = () => {
         setSelectedBrowser(savedBrowser);
 
         const detectedBrowsers: DetectedBrowser[] = await invoke(
-          "detect_installed_browsers"
+          "detect_installed_browsers",
         );
 
         const options = [

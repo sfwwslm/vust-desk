@@ -210,7 +210,7 @@ const AuthSettings: React.FC = () => {
       setServerAddressUpdated(true);
     } catch (error: any) {
       setServerAddressError(
-        error?.message || t("account.unknownError") || "Update failed"
+        error?.message || t("account.unknownError") || "Update failed",
       );
     } finally {
       setIsUpdatingServer(false);
@@ -221,7 +221,9 @@ const AuthSettings: React.FC = () => {
     if (!activeUser || !canEditServerAddress) return;
     openConfirm({
       title: t("account.deleteUserTitle"),
-      message: t("account.deleteUserMessage", { username: activeUser.username }),
+      message: t("account.deleteUserMessage", {
+        username: activeUser.username,
+      }),
       confirmText: t("account.deleteUserConfirm"),
       onConfirm: async () => {
         setIsDeletingUser(true);
@@ -307,7 +309,7 @@ const AuthSettings: React.FC = () => {
                     (close) => <LoginModal isOpen={true} onClose={close} />,
                     {
                       key: "login",
-                    }
+                    },
                   )
                 }
                 variant="primary"

@@ -21,10 +21,10 @@ async function ensureDefaultDataIsInitialized(): Promise<void> {
   // 检查表是否为空
   const [groupCount, itemCount] = await Promise.all([
     dbClient.select<{ count: number }>(
-      `SELECT COUNT(*) AS count FROM ${WEBSITE_GROUPS_TABLE_NAME}`
+      `SELECT COUNT(*) AS count FROM ${WEBSITE_GROUPS_TABLE_NAME}`,
     ),
     dbClient.select<{ count: number }>(
-      `SELECT COUNT(*) AS count FROM ${WEBSITES_TABLE_NAME}`
+      `SELECT COUNT(*) AS count FROM ${WEBSITES_TABLE_NAME}`,
     ),
   ]);
 
@@ -48,7 +48,7 @@ async function ensureDefaultDataIsInitialized(): Promise<void> {
  * @returns {Promise<{ groups: WebsiteGroup[]; items: WebsiteItem[] }>} 返回包含分组和网站项独立数组的对象
  */
 export async function getPanelData(
-  userUuid: string
+  userUuid: string,
 ): Promise<{ groups: WebsiteGroup[]; items: WebsiteItem[] }> {
   if (userUuid === ANONYMOUS_USER_UUID) {
     await ensureDefaultDataIsInitialized();
@@ -56,7 +56,7 @@ export async function getPanelData(
 
   const groups = await dbClient.select<WebsiteGroup>(
     `SELECT * FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1 AND is_deleted = 0 ORDER BY sort_order ASC, id ASC`,
-    [userUuid]
+    [userUuid],
   );
 
   if (groups.length === 0) {
@@ -67,7 +67,7 @@ export async function getPanelData(
   const items = await dbClient.select<WebsiteItem>(
     // 直接获取该用户的所有 item，而不是按 group uuid 查询
     `SELECT * FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1 AND is_deleted = 0 ORDER BY sort_order ASC, id ASC`,
-    [userUuid]
+    [userUuid],
   );
 
   return { groups, items };
@@ -81,7 +81,7 @@ export async function saveGroup(group: Partial<WebsiteGroup>): Promise<void> {
     // 更新
     await dbClient.execute(
       `UPDATE ${WEBSITE_GROUPS_TABLE_NAME} SET name = $1, description = $2, sort_order = $3 WHERE uuid = $4`,
-      [group.name, group.description, group.sort_order, group.uuid]
+      [group.name, group.description, group.sort_order, group.uuid],
     );
   } else {
     // 新增
@@ -96,7 +96,7 @@ export async function saveGroup(group: Partial<WebsiteGroup>): Promise<void> {
         group.name,
         group.description,
         group.sort_order,
-      ]
+      ],
     );
   }
 }
@@ -105,12 +105,12 @@ export async function saveGroup(group: Partial<WebsiteGroup>): Promise<void> {
  * 批量更新分组的排序。
  */
 export async function updateGroupsOrder(
-  groups: Pick<WebsiteGroup, "uuid">[]
+  groups: Pick<WebsiteGroup, "uuid">[],
 ): Promise<void> {
   for (const [index, group] of groups.entries()) {
     await dbClient.execute(
       `UPDATE ${WEBSITE_GROUPS_TABLE_NAME} SET sort_order = $1 WHERE uuid = $2`,
-      [index + 1, group.uuid]
+      [index + 1, group.uuid],
     );
   }
 }
@@ -121,11 +121,11 @@ export async function updateGroupsOrder(
 export async function deleteGroup(groupUuid: string): Promise<void> {
   await dbClient.execute(
     `UPDATE ${WEBSITE_GROUPS_TABLE_NAME} SET is_deleted = 1 WHERE uuid = $1`,
-    [groupUuid]
+    [groupUuid],
   );
   await dbClient.execute(
     `UPDATE ${WEBSITES_TABLE_NAME} SET is_deleted = 1 WHERE group_uuid = $1`,
-    [groupUuid]
+    [groupUuid],
   );
 }
 
@@ -149,7 +149,7 @@ export async function saveItem(item: Partial<WebsiteItem>): Promise<void> {
         item.background_color,
         item.icon_source,
         item.uuid,
-      ]
+      ],
     );
   } else {
     // 新增
@@ -173,7 +173,7 @@ export async function saveItem(item: Partial<WebsiteItem>): Promise<void> {
         item.description,
         item.background_color,
         item.icon_source,
-      ]
+      ],
     );
   }
 }
@@ -182,12 +182,12 @@ export async function saveItem(item: Partial<WebsiteItem>): Promise<void> {
  * 批量更新网站项的排序。
  */
 export async function updateItemsOrder(
-  items: Pick<WebsiteItem, "uuid">[]
+  items: Pick<WebsiteItem, "uuid">[],
 ): Promise<void> {
   for (const [index, item] of items.entries()) {
     await dbClient.execute(
       `UPDATE ${WEBSITES_TABLE_NAME} SET sort_order = $1 WHERE uuid = $2`,
-      [index + 1, item.uuid]
+      [index + 1, item.uuid],
     );
   }
 }
@@ -198,7 +198,7 @@ export async function updateItemsOrder(
 export async function deleteItem(itemUuid: string): Promise<void> {
   await dbClient.execute(
     `UPDATE ${WEBSITES_TABLE_NAME} SET is_deleted = 1 WHERE uuid = $1`,
-    [itemUuid]
+    [itemUuid],
   );
 }
 
@@ -212,7 +212,7 @@ async function insertDefaultData(userUuid: string): Promise<void> {
     const groupUuid = crypto.randomUUID();
     await dbClient.execute(
       `INSERT INTO ${WEBSITE_GROUPS_TABLE_NAME} (uuid, user_uuid, name, sort_order, description) VALUES ($1, $2, $3, $4, $5)`,
-      [groupUuid, userUuid, group.name, group.sort_order, group.description]
+      [groupUuid, userUuid, group.name, group.sort_order, group.description],
     );
 
     if (group.items && group.items.length > 0) {
@@ -228,7 +228,7 @@ async function insertDefaultData(userUuid: string): Promise<void> {
             item.default_icon,
             item.sort_order,
             item.description,
-          ]
+          ],
         );
       }
     }
@@ -241,11 +241,11 @@ async function insertDefaultData(userUuid: string): Promise<void> {
  * 获取用户的所有自定义搜索引擎。
  */
 export async function getSearchEngines(
-  userUuid: string
+  userUuid: string,
 ): Promise<SearchEngine[]> {
   const customEngines = await dbClient.select<SearchEngine>(
     `SELECT *, 1 as is_deletable FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1 ORDER BY sort_order ASC, name ASC`,
-    [userUuid]
+    [userUuid],
   );
   return customEngines;
 }
@@ -254,11 +254,11 @@ export async function getSearchEngines(
  * 获取用户的默认搜索引擎。
  */
 export async function getDefaultSearchEngine(
-  userUuid: string
+  userUuid: string,
 ): Promise<SearchEngine | null> {
   const result = await dbClient.select<SearchEngine>(
     `SELECT *, 1 as is_deletable FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = 1`,
-    [userUuid]
+    [userUuid],
   );
   return result[0] || null;
 }
@@ -269,7 +269,7 @@ export async function getDefaultSearchEngine(
 export async function saveSearchEngine(
   engine: Partial<Omit<SearchEngine, "id" | "is_deletable">> & {
     user_uuid: string;
-  }
+  },
 ): Promise<void> {
   if (engine.uuid) {
     // 更新操作
@@ -281,7 +281,7 @@ export async function saveSearchEngine(
         engine.local_icon_path,
         engine.uuid,
         engine.user_uuid,
-      ]
+      ],
     );
   } else {
     // 新增操作
@@ -295,7 +295,7 @@ export async function saveSearchEngine(
         engine.default_icon,
         engine.local_icon_path,
         0,
-      ]
+      ],
     );
   }
 }
@@ -305,16 +305,16 @@ export async function saveSearchEngine(
  */
 export async function setActiveSearchEngine(
   engineUuid: string,
-  userUuid: string
+  userUuid: string,
 ): Promise<void> {
   // 事务：先将所有引擎设为非默认，再将选定的设为默认
   await dbClient.execute(
     `UPDATE ${SEARCH_ENGINES_TABLE_NAME} SET is_default = 0 WHERE user_uuid = $1`,
-    [userUuid]
+    [userUuid],
   );
   await dbClient.execute(
     `UPDATE ${SEARCH_ENGINES_TABLE_NAME} SET is_default = 1 WHERE user_uuid = $1 AND uuid = $2`,
-    [userUuid, engineUuid]
+    [userUuid, engineUuid],
   );
 }
 
@@ -322,11 +322,11 @@ export async function setActiveSearchEngine(
  * 清除用户的默认搜索引擎设置。
  */
 export async function clearDefaultSearchEngine(
-  userUuid: string
+  userUuid: string,
 ): Promise<void> {
   await dbClient.execute(
     `UPDATE ${SEARCH_ENGINES_TABLE_NAME} SET is_default = 0 WHERE user_uuid = $1`,
-    [userUuid]
+    [userUuid],
   );
 }
 
@@ -336,6 +336,6 @@ export async function clearDefaultSearchEngine(
 export async function deleteSearchEngine(uuid: string): Promise<void> {
   await dbClient.execute(
     `DELETE FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE uuid = $1`,
-    [uuid]
+    [uuid],
   );
 }

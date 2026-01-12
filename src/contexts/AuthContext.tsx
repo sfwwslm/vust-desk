@@ -34,7 +34,7 @@ function parseJwt(token: string): Claims | null {
         .map(function (c) {
           return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
         })
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
@@ -87,7 +87,7 @@ interface AuthContextType {
     username: string,
     password: string,
     address: string,
-    useHttps: boolean
+    useHttps: boolean,
   ) => Promise<void>;
 
   /**
@@ -172,7 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       uuid: ANONYMOUS_USER_UUID,
       username: ANONYMOUS_USER,
       isLoggedIn: 1, // 匿名用户始终在本地“登录”
-    }
+    },
   );
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
 
@@ -207,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setActiveUser(user);
       log.info(`已切换当前用户为: ${user.username}`);
     },
-    [setActiveUser]
+    [setActiveUser],
   );
 
   const login = useCallback(
@@ -215,7 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       username: string,
       password: string,
       address: string,
-      useHttps: boolean
+      useHttps: boolean,
     ) => {
       try {
         let protocol = useHttps ? "https" : "http";
@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           },
           {
             baseUrl: serverAddress,
-          }
+          },
         );
 
         const claims = parseJwt(res.accessToken);
@@ -271,7 +271,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     },
-    [switchActiveUser, refreshAvailableUsers]
+    [switchActiveUser, refreshAvailableUsers],
   );
 
   const logoutUser = useCallback(
@@ -281,7 +281,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const refreshedUsers = await refreshAvailableUsers();
       if (activeUser?.uuid === uuid) {
         const anonymousUser = refreshedUsers.find(
-          (u) => u.uuid === ANONYMOUS_USER_UUID
+          (u) => u.uuid === ANONYMOUS_USER_UUID,
         );
         if (anonymousUser) {
           switchActiveUser(anonymousUser);
@@ -289,7 +289,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       log.info(`用户 ${uuid} 已被登出。`);
     },
-    [activeUser, refreshAvailableUsers, switchActiveUser]
+    [activeUser, refreshAvailableUsers, switchActiveUser],
   );
 
   const logout = useCallback(async () => {
@@ -304,24 +304,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const refreshedUsers = await refreshAvailableUsers();
 
       if (activeUser?.uuid === uuid) {
-        const anonymousUser =
-          refreshedUsers.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
-            uuid: ANONYMOUS_USER_UUID,
-            username: ANONYMOUS_USER,
-            isLoggedIn: 1,
-          };
+        const anonymousUser = refreshedUsers.find(
+          (u) => u.uuid === ANONYMOUS_USER_UUID,
+        ) || {
+          uuid: ANONYMOUS_USER_UUID,
+          username: ANONYMOUS_USER,
+          isLoggedIn: 1,
+        };
         switchActiveUser(anonymousUser);
       }
 
       incrementDataVersion();
       log.info(`用户 ${uuid} 及其本地数据已被删除。`);
     },
-    [
-      activeUser,
-      incrementDataVersion,
-      refreshAvailableUsers,
-      switchActiveUser,
-    ]
+    [activeUser, incrementDataVersion, refreshAvailableUsers, switchActiveUser],
   );
 
   const updateServerAddress = useCallback(
@@ -334,20 +330,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setActiveUser((prev) =>
         prev && prev.uuid === activeUser.uuid
           ? { ...prev, serverAddress: trimmedAddress }
-          : prev
+          : prev,
       );
       setAvailableUsers((prev) =>
         prev.map((user) =>
           user.uuid === activeUser.uuid
             ? { ...user, serverAddress: trimmedAddress }
-            : user
-        )
+            : user,
+        ),
       );
       log.info(
-        `用户 ${activeUser.username} (${activeUser.uuid}) 的服务器地址已更新。`
+        `用户 ${activeUser.username} (${activeUser.uuid}) 的服务器地址已更新。`,
       );
     },
-    [activeUser, setActiveUser, setAvailableUsers]
+    [activeUser, setActiveUser, setAvailableUsers],
   );
 
   return (

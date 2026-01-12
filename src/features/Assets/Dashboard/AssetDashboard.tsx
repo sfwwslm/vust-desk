@@ -79,7 +79,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     // 在加载数据前检查全局锁
     if (isDataOperationInProgress) {
       log.info(
-        "一个数据密集型操作正在进行中，资产仪表盘已智能暂停本次数据加载以避免冲突。"
+        "一个数据密集型操作正在进行中，资产仪表盘已智能暂停本次数据加载以避免冲突。",
       );
       return; // 如果有操作正在进行，则直接返回，不执行任何数据库查询
     }
@@ -95,7 +95,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     try {
       setIsLoading(true);
       log.info(
-        `正在为用户 ${activeUser.username} (${activeUser.uuid}) 加载资产数据...`
+        `正在为用户 ${activeUser.username} (${activeUser.uuid}) 加载资产数据...`,
       );
       const data = await assetDb.getAssetsData(activeUser.uuid);
       setAssets(data);
@@ -121,14 +121,14 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 
   const kpis = useMemo(() => {
     const holdingAssets = assets.filter(
-      (asset) => (asset.status || "holding") !== "sold"
+      (asset) => (asset.status || "holding") !== "sold",
     );
     const soldAssets = assets.filter(
-      (asset) => (asset.status || "holding") === "sold"
+      (asset) => (asset.status || "holding") === "sold",
     );
     const totalHoldingCost = holdingAssets.reduce(
       (sum, asset) => sum + (asset.price || 0),
-      0
+      0,
     );
     const realizedProfit = soldAssets.reduce((sum, asset) => {
       const profit =
@@ -152,12 +152,12 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.category_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.brand?.toLocaleLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.buyer?.toLowerCase().includes(searchTerm.toLowerCase())
+        asset.buyer?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     if (!showSold) {
       filtered = filtered.filter(
-        (asset) => (asset.status || "holding") !== "sold"
+        (asset) => (asset.status || "holding") !== "sold",
       );
     }
 
@@ -205,7 +205,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
     // 当总页数变小且当前页超出时，自动回退到最后一页
     const total = Math.max(
       1,
-      Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE)
+      Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE),
     );
     if (currentPage > total) {
       setCurrentPage(total);
@@ -214,7 +214,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE)
+    Math.ceil(sortedAndFilteredAssets.length / ITEMS_PER_PAGE),
   );
 
   const paginatedAssets = useMemo(() => {
@@ -280,11 +280,12 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
       <DashboardContainer theme={theme}>
         <SummarySection theme={theme} id="asset-summary">
           <span>
-            {t("management.asset.holdingAssetsLabel")}: <strong>{kpis.holdingCount}</strong>
+            {t("management.asset.holdingAssetsLabel")}:{" "}
+            <strong>{kpis.holdingCount}</strong>
           </span>
           <span style={{ margin: "0 1rem" }}>|</span>
           <span>
-            {t("management.asset.holdingCost")}: 
+            {t("management.asset.holdingCost")}:
             <strong>
               ￥
               {kpis.totalHoldingCost.toLocaleString("zh-CN", {
@@ -295,7 +296,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
           </span>
           <span style={{ margin: "0 1rem" }}>|</span>
           <span>
-            {t("management.asset.realizedProfit")}: 
+            {t("management.asset.realizedProfit")}:
             <strong>
               ￥
               {kpis.realizedProfit.toLocaleString("zh-CN", {
@@ -306,7 +307,8 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
           </span>
           <span style={{ margin: "0 1rem" }}>|</span>
           <span>
-            {t("management.asset.totalRecords")}: <strong>{kpis.totalAssets}</strong>
+            {t("management.asset.totalRecords")}:{" "}
+            <strong>{kpis.totalAssets}</strong>
           </span>
         </SummarySection>
 
@@ -468,7 +470,9 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                           ? t("management.asset.category.defaultCategory")
                           : asset.category_name || t("common.none")}
                       </TableCell>
-                      <TableCell>￥ {asset.price.toLocaleString("zh-CN")}</TableCell>
+                      <TableCell>
+                        ￥ {asset.price.toLocaleString("zh-CN")}
+                      </TableCell>
                       <TableCell>{asset.purchase_date}</TableCell>
                       <TableCell>
                         {(asset.status || "holding") === "sold"
@@ -476,7 +480,8 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                           : t("management.asset.statusHolding")}
                       </TableCell>
                       <TableCell>
-                        {asset.sale_price !== null && asset.sale_price !== undefined
+                        {asset.sale_price !== null &&
+                        asset.sale_price !== undefined
                           ? `￥ ${asset.sale_price.toLocaleString("zh-CN")}`
                           : "—"}
                       </TableCell>
@@ -504,7 +509,10 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                           </EditButton>
                         </Tooltip>
                         <Tooltip text={t("management.asset.markSold")}>
-                          <EditButton theme={theme} onClick={() => handleSell(asset)}>
+                          <EditButton
+                            theme={theme}
+                            onClick={() => handleSell(asset)}
+                          >
                             <IoCheckmarkCircle />
                           </EditButton>
                         </Tooltip>

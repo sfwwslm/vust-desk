@@ -16,7 +16,7 @@ interface IconRefreshContextType {
 }
 
 const IconRefreshContext = createContext<IconRefreshContextType | undefined>(
-  undefined
+  undefined,
 );
 
 /**
@@ -50,7 +50,7 @@ export const useIconRefresh = () => {
   const context = useContext(IconRefreshContext);
   if (!context) {
     throw new Error(
-      "useIconRefresh must be used within an IconRefreshProvider"
+      "useIconRefresh must be used within an IconRefreshProvider",
     );
   }
   return context;

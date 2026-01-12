@@ -71,7 +71,9 @@ export const GroupListItem = styled.li<{ $isDragging: boolean }>`
   border: 1px solid ${(props) => props.theme.colors.border};
   border-radius: 5px;
   margin-bottom: 1rem;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease;
   box-shadow: ${(props) =>
     props.$isDragging ? "0 4px 12px rgba(0,0,0,0.2)" : "none"};
 `;

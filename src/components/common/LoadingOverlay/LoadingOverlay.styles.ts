@@ -18,10 +18,10 @@ export const Overlay = styled(motion.div)<{ theme: Theme }>`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: ${(props) => props.theme.zIndices.loadingOverlay}; /* 确保在模态框之上 */
+  z-index: ${(props) =>
+    props.theme.zIndices.loadingOverlay}; /* 确保在模态框之上 */
   backdrop-filter: blur(3px);
-  border-radius: ${(props) =>
-    props.theme.radii.base};
+  border-radius: ${(props) => props.theme.radii.base};
 `;
 
 export const Spinner = styled.div<{ theme: Theme }>`

@@ -47,7 +47,9 @@ const CategoryListItem = styled(motion.li)`
   border: 1px solid ${(props) => props.theme.colors.border};
   border-radius: ${(props) => props.theme.radii.base};
   margin-bottom: 0.5rem;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 
   &:hover {
     background-color: ${(props) => props.theme.colors.background};
@@ -133,7 +135,7 @@ const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [inputValue, setInputValue] = useState("");
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(
-    null
+    null,
   );
   const [refreshNeeded, setRefreshNeeded] = useState(false);
   const { activeUser } = useAuth();
@@ -171,7 +173,7 @@ const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
     const isDuplicate = categories.some(
       (cat) =>
         cat.name.toLowerCase() === inputValue.trim().toLowerCase() &&
-        cat.uuid !== editingCategory?.uuid
+        cat.uuid !== editingCategory?.uuid,
     );
 
     if (isDuplicate) {
@@ -268,7 +270,7 @@ const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
                         text={
                           isDefaultCategory
                             ? t(
-                                "management.asset.category.defaultCategoryTooltip"
+                                "management.asset.category.defaultCategoryTooltip",
                               )
                             : t("common.edit")
                         }
@@ -286,7 +288,7 @@ const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
                         text={
                           isDefaultCategory
                             ? t(
-                                "management.asset.category.defaultCategoryTooltip"
+                                "management.asset.category.defaultCategoryTooltip",
                               )
                             : t("common.delete")
                         }

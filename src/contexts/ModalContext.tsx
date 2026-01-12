@@ -31,14 +31,14 @@ interface ModalOptions {
 interface ModalContextType {
   openModal: (
     renderContent: (close: () => void) => ReactNode,
-    options?: ModalOptions
+    options?: ModalOptions,
   ) => void;
   closeModal: (id?: string) => void;
   openAlert: (props: Omit<AlertModalProps, "isOpen" | "onClose">) => void;
   openConfirm: (
     props: Omit<ConfirmationModalProps, "isOpen" | "onClose" | "onCancel"> & {
       onCancel?: () => void;
-    }
+    },
   ) => void;
 }
 
@@ -60,7 +60,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
   const openModal = useCallback(
     (
       renderContent: (close: () => void) => ReactNode,
-      options?: ModalOptions
+      options?: ModalOptions,
     ) => {
       const { key, zIndex } = options || {};
 
@@ -85,7 +85,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
         return [...prevModals, newModal]; // 返回新状态
       });
     },
-    [closeModal]
+    [closeModal],
   );
 
   const openAlert = useCallback(
@@ -94,14 +94,14 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
         <AlertModal {...props} isOpen={true} onClose={close} />
       ));
     },
-    [openModal]
+    [openModal],
   );
 
   const openConfirm = useCallback(
     (
       props: Omit<ConfirmationModalProps, "isOpen" | "onClose" | "onCancel"> & {
         onCancel?: () => void;
-      }
+      },
     ) => {
       openModal((close) => {
         const handleConfirm = () => {
@@ -122,7 +122,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
         );
       });
     },
-    [openModal]
+    [openModal],
   );
 
   useEffect(() => {

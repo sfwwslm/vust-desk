@@ -162,13 +162,13 @@ function tryParseApiResponse(err: unknown): ApiResponse<any> | undefined {
 // 同步日志：插入一条记录
 async function createSyncLog(
   sessionId: string,
-  userUuid: string
+  userUuid: string,
 ): Promise<void> {
   const now = new Date().toISOString();
   try {
     await dbClient.execute(
       `INSERT INTO sync_logs (session_id, user_uuid, started_at, status) VALUES ($1, $2, $3, 'running')`,
-      [sessionId, userUuid, now]
+      [sessionId, userUuid, now],
     );
   } catch (error) {
     log.warn(`写入同步日志失败（create）：${formatError(error)}`);
@@ -180,7 +180,7 @@ async function finalizeSyncLog(
   sessionId: string,
   status: "success" | "failed",
   summary?: string,
-  errorText?: string
+  errorText?: string,
 ): Promise<void> {
   const now = new Date().toISOString();
   try {
@@ -190,7 +190,7 @@ async function finalizeSyncLog(
         SET finished_at = $1, status = $2, summary = $3, error = $4
         WHERE session_id = $5
       `,
-      [now, status, summary || null, errorText || null, sessionId]
+      [now, status, summary || null, errorText || null, sessionId],
     );
   } catch (error) {
     log.warn(`写入同步日志失败（finalize）：${formatError(error)}`);
@@ -216,42 +216,42 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
 
   if (serverDefault) {
     log.info(
-      `[资产分类] 服务器权威默认分类已识别: (UUID: ${serverDefault.uuid}, 名称: "${serverDefault.name}")`
+      `[资产分类] 服务器权威默认分类已识别: (UUID: ${serverDefault.uuid}, 名称: "${serverDefault.name}")`,
     );
 
     const localDefaults = await dbClient.select<AssetCategoryDto>(
       `SELECT * FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = 1`,
-      [userUuid]
+      [userUuid],
     );
 
     conflictingDefaults = localDefaults.filter(
-      (ld) => ld.uuid !== serverDefault.uuid
+      (ld) => ld.uuid !== serverDefault.uuid,
     );
 
     if (conflictingDefaults.length > 0) {
       log.warn(
-        `[资产分类] ⚠️ 检测到 ${conflictingDefaults.length} 个本地默认分类与服务器冲突，启动“降级-扶正-清理”流程...`
+        `[资产分类] ⚠️ 检测到 ${conflictingDefaults.length} 个本地默认分类与服务器冲突，启动“降级-扶正-清理”流程...`,
       );
 
       for (const localDefault of conflictingDefaults) {
         log.info(
-          `[资产分类] ➡️ 正在处理冲突项: (UUID: ${localDefault.uuid}, 名称: "${localDefault.name}")`
+          `[资产分类] ➡️ 正在处理冲突项: (UUID: ${localDefault.uuid}, 名称: "${localDefault.name}")`,
         );
 
         // 步骤 1.1: 降级并重命名
         const deprecatedName = `${localDefault.name}_deprecated_${Date.now()}`;
         await dbClient.execute(
           `UPDATE ${ASSET_CATEGORIES_TABLE_NAME} SET is_default = 0, name = $1 WHERE uuid = $2`,
-          [deprecatedName, localDefault.uuid]
+          [deprecatedName, localDefault.uuid],
         );
         log.info(
-          `[资产分类] ✅ [降级] 已将本地旧默认分类 ${localDefault.uuid} 的 is_default 设为 0，并重命名为 "${deprecatedName}"。`
+          `[资产分类] ✅ [降级] 已将本地旧默认分类 ${localDefault.uuid} 的 is_default 设为 0，并重命名为 "${deprecatedName}"。`,
         );
       }
 
       // 步骤 1.2: 扶正
       log.info(
-        `[资产分类] ➡️ [扶正] 正在插入/更新权威默认分类 ${serverDefault.uuid}，确保其 is_default 为 1。`
+        `[资产分类] ➡️ [扶正] 正在插入/更新权威默认分类 ${serverDefault.uuid}，确保其 is_default 为 1。`,
       );
       const recordWithUser = { ...serverDefault, user_uuid: userUuid };
       const columns = Object.keys(recordWithUser);
@@ -262,35 +262,35 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
         .map((col) => `${col} = excluded.${col}`)
         .join(", ");
       const upsertSql = `INSERT INTO ${ASSET_CATEGORIES_TABLE_NAME} (${columns.join(
-        ","
+        ",",
       )}) VALUES (${placeholders}) ON CONFLICT(uuid) DO UPDATE SET ${updateSet};`;
       await dbClient.execute(upsertSql, values as any[]);
       log.info(
-        `[资产分类] ✅ [扶正] 权威默认分类 ${serverDefault.uuid} 已成功写入本地数据库。`
+        `[资产分类] ✅ [扶正] 权威默认分类 ${serverDefault.uuid} 已成功写入本地数据库。`,
       );
 
       // 步骤 1.3: 迁移并清理
       for (const localDefault of conflictingDefaults) {
         log.info(
-          `[资产分类] ➡️ [迁移] 正在将资产从旧分类 ${localDefault.uuid} 迁移至权威分类 ${serverDefault.uuid}...`
+          `[资产分类] ➡️ [迁移] 正在将资产从旧分类 ${localDefault.uuid} 迁移至权威分类 ${serverDefault.uuid}...`,
         );
         const migrationResult = await dbClient.execute(
           `UPDATE ${ASSET_TABLE_NAME} SET category_uuid = $1 WHERE category_uuid = $2`,
-          [serverDefault.uuid, localDefault.uuid]
+          [serverDefault.uuid, localDefault.uuid],
         );
         log.info(
-          `[资产分类] ✅ [迁移] ${migrationResult.rowsAffected} 条资产已成功迁移。`
+          `[资产分类] ✅ [迁移] ${migrationResult.rowsAffected} 条资产已成功迁移。`,
         );
 
         log.info(
-          `[资产分类] ➡️ [清理] 正在删除已无用的旧默认分类 ${localDefault.uuid}...`
+          `[资产分类] ➡️ [清理] 正在删除已无用的旧默认分类 ${localDefault.uuid}...`,
         );
         await dbClient.execute(
           `DELETE FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE uuid = $1`,
-          [localDefault.uuid]
+          [localDefault.uuid],
         );
         log.info(
-          `[资产分类] ✅ [清理] 已成功删除旧默认分类 ${localDefault.uuid}。`
+          `[资产分类] ✅ [清理] 已成功删除旧默认分类 ${localDefault.uuid}。`,
         );
       }
     }
@@ -302,45 +302,45 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
   const serverGroups = syncData.website_groups;
   const localGroups = await dbClient.select<WebsiteGroupDto>(
     `SELECT * FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1`,
-    [userUuid]
+    [userUuid],
   );
   const groupsToClean = new Set<string>();
 
   for (const serverGroup of serverGroups) {
     const localConflict = localGroups.find(
-      (lg) => lg.name === serverGroup.name && lg.uuid !== serverGroup.uuid
+      (lg) => lg.name === serverGroup.name && lg.uuid !== serverGroup.uuid,
     );
     if (localConflict) {
       log.warn(
-        `[网站分组] ⚠️ 检测到名称冲突: "${serverGroup.name}"。本地UUID: ${localConflict.uuid}, 服务器权威UUID: ${serverGroup.uuid}。启动合并流程...`
+        `[网站分组] ⚠️ 检测到名称冲突: "${serverGroup.name}"。本地UUID: ${localConflict.uuid}, 服务器权威UUID: ${serverGroup.uuid}。启动合并流程...`,
       );
 
       // 步骤 2.1: 重命名本地冲突项
       const deprecatedName = `${localConflict.name}_deprecated_${Date.now()}`;
       await dbClient.execute(
         `UPDATE ${WEBSITE_GROUPS_TABLE_NAME} SET name = $1 WHERE uuid = $2`,
-        [deprecatedName, localConflict.uuid]
+        [deprecatedName, localConflict.uuid],
       );
       log.info(
-        `[网站分组] ✅ [重命名] 已将本地冲突分组 ${localConflict.uuid} 重命名为 "${deprecatedName}"。`
+        `[网站分组] ✅ [重命名] 已将本地冲突分组 ${localConflict.uuid} 重命名为 "${deprecatedName}"。`,
       );
 
       // 步骤 2.2: 迁移子记录
       log.info(
-        `[网站分组] ➡️ [迁移] 正在将网站从旧分组 ${localConflict.uuid} 迁移至权威分组 ${serverGroup.uuid}...`
+        `[网站分组] ➡️ [迁移] 正在将网站从旧分组 ${localConflict.uuid} 迁移至权威分组 ${serverGroup.uuid}...`,
       );
       const migrationResult = await dbClient.execute(
         `UPDATE ${WEBSITES_TABLE_NAME} SET group_uuid = $1 WHERE group_uuid = $2`,
-        [serverGroup.uuid, localConflict.uuid]
+        [serverGroup.uuid, localConflict.uuid],
       );
       log.info(
-        `[网站分组] ✅ [迁移] ${migrationResult.rowsAffected} 个网站已成功迁移。`
+        `[网站分组] ✅ [迁移] ${migrationResult.rowsAffected} 个网站已成功迁移。`,
       );
 
       // 步骤 2.3: 标记待清理
       groupsToClean.add(localConflict.uuid);
       log.info(
-        `[网站分组] ➡️ [标记] 已将旧分组 ${localConflict.uuid} 标记为待清理。`
+        `[网站分组] ➡️ [标记] 已将旧分组 ${localConflict.uuid} 标记为待清理。`,
       );
     }
   }
@@ -352,7 +352,7 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
   const otherCategories = serverCategories?.filter(
     (c) =>
       c.uuid !== serverDefault?.uuid &&
-      !allConflictingCategoryUuids.includes(c.uuid)
+      !allConflictingCategoryUuids.includes(c.uuid),
   );
 
   const tables = [
@@ -380,7 +380,7 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
           .join(", ");
 
         const sql = `INSERT INTO ${table.name} (${columns.join(
-          ", "
+          ", ",
         )}) VALUES (${placeholders}) ON CONFLICT(uuid) DO UPDATE SET ${updateSet};`;
         await dbClient.execute(sql, values as any[]);
       }
@@ -399,7 +399,7 @@ const processServerData = async (userUuid: string, syncData: SyncDataDto) => {
     for (const uuidToClean of groupsToClean) {
       await dbClient.execute(
         `DELETE FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE uuid = $1`,
-        [uuidToClean]
+        [uuidToClean],
       );
       log.info(`[最终清理] ✅ 已成功清理旧分组: ${uuidToClean}`);
     }
@@ -423,7 +423,7 @@ const runSyncPrerequisites = async (
     switchActiveUser,
     refreshAvailableUsers,
     t,
-  }: SyncStatusUpdaters
+  }: SyncStatusUpdaters,
 ): Promise<void> => {
   setSyncMessage(t("sync.verifyingUser"));
 
@@ -453,7 +453,7 @@ const runSyncPrerequisites = async (
           });
         }
         log.info("本地用户名和状态已同步更新。");
-      }
+      },
     );
 
     // 验证用户 Token
@@ -481,7 +481,7 @@ const runSyncPrerequisites = async (
     }
     const serverVersionResp: ApiResponse<VersionInfo> = await invoke(
       "check_server_version",
-      { server_address: user.serverAddress }
+      { server_address: user.serverAddress },
     );
     const serverVersion = serverVersionResp.data?.version;
     if (!serverVersion || !isVersionGte(serverVersion, MIN_SERVER_VERSION)) {
@@ -489,7 +489,7 @@ const runSyncPrerequisites = async (
         t("sync.serverTooOld", {
           version: serverVersion || "unknown",
           required: MIN_SERVER_VERSION,
-        })
+        }),
       );
     }
 
@@ -505,7 +505,7 @@ const runSyncPrerequisites = async (
 const handleAccountDeletedOnServer = async (
   user: User,
   updaters: SyncStatusUpdaters,
-  serverMessage?: string
+  serverMessage?: string,
 ) => {
   const {
     setSyncMessage,
@@ -516,7 +516,7 @@ const handleAccountDeletedOnServer = async (
   } = updaters;
 
   setSyncMessage(
-    t("sync.accountDeletedOnServer", { reason: serverMessage || "" })
+    t("sync.accountDeletedOnServer", { reason: serverMessage || "" }),
   );
 
   try {
@@ -541,13 +541,13 @@ const handleAccountDeletedOnServer = async (
 const handleAccountDisabledOnServer = async (
   user: User,
   updaters: SyncStatusUpdaters,
-  serverMessage?: string
+  serverMessage?: string,
 ) => {
   const { setSyncMessage, switchActiveUser, refreshAvailableUsers, t } =
     updaters;
 
   setSyncMessage(
-    t("sync.accountDisabledOnServer", { reason: serverMessage || "" })
+    t("sync.accountDisabledOnServer", { reason: serverMessage || "" }),
   );
 
   try {
@@ -570,13 +570,13 @@ const handleAccountDisabledOnServer = async (
 const handleTokenExpiredOnServer = async (
   user: User,
   updaters: SyncStatusUpdaters,
-  serverMessage?: string
+  serverMessage?: string,
 ) => {
   const { setSyncMessage, switchActiveUser, refreshAvailableUsers, t } =
     updaters;
 
   setSyncMessage(
-    t("sync.tokenExpiredOnServer", { reason: serverMessage || "" })
+    t("sync.tokenExpiredOnServer", { reason: serverMessage || "" }),
   );
 
   try {
@@ -611,7 +611,7 @@ async function sendDataInChunks<T>(
   data: T[],
   setSyncMessage: (message: string) => void,
   t: (key: string, options?: any) => string,
-  chunkSize: number
+  chunkSize: number,
 ) {
   if (data.length === 0) {
     log.info(`[同步] 无需同步数据: ${dataType}`);
@@ -625,7 +625,7 @@ async function sendDataInChunks<T>(
         type: t(`sync.dataType.${dataType}`),
         current: i + 1,
         total: totalChunks,
-      })
+      }),
     );
     const chunkPayload: ClientSyncDataChunk = {
       session_id: sessionId,
@@ -643,7 +643,7 @@ async function sendDataInChunks<T>(
         attempt += 1;
         const backoff = 300 * attempt;
         log.warn(
-          `发送分块失败，正在重试(${attempt}/${maxRetries})，等待 ${backoff}ms: ${err}`
+          `发送分块失败，正在重试(${attempt}/${maxRetries})，等待 ${backoff}ms: ${err}`,
         );
         if (attempt >= maxRetries) {
           throw err;
@@ -702,7 +702,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     };
     const startResponse: ApiResponse<StartSyncResponse> = await invoke(
       "sync_start",
-      { user, payload: startPayload }
+      { user, payload: startPayload },
     );
     if (!startResponse.success || !startResponse.data) {
       if (isTokenExpiredResponse(startResponse)) {
@@ -713,7 +713,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         await handleAccountDisabledOnServer(
           user,
           updaters,
-          startResponse.message
+          startResponse.message,
         );
         return;
       }
@@ -721,7 +721,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         await handleAccountDeletedOnServer(
           user,
           updaters,
-          startResponse.message
+          startResponse.message,
         );
         return;
       }
@@ -771,7 +771,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         data,
         setSyncMessage,
         t,
-        chunkSize
+        chunkSize,
       );
     }
 
@@ -783,7 +783,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       localIcons,
       setSyncMessage,
       t,
-      chunkSize
+      chunkSize,
     );
 
     // 5. 完成同步会话并处理服务器返回的数据
@@ -803,7 +803,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         await handleTokenExpiredOnServer(
           user,
           updaters,
-          completeResponse.message
+          completeResponse.message,
         );
         return;
       }
@@ -811,7 +811,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         await handleAccountDisabledOnServer(
           user,
           updaters,
-          completeResponse.message
+          completeResponse.message,
         );
         return;
       }
@@ -819,7 +819,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         await handleAccountDeletedOnServer(
           user,
           updaters,
-          completeResponse.message
+          completeResponse.message,
         );
         return;
       }
@@ -835,13 +835,15 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
 
     if (serverData.icons_to_upload?.length > 0) {
       setSyncMessage(
-        t("sync.uploadingIcons", { num: serverData.icons_to_upload.length })
+        t("sync.uploadingIcons", { num: serverData.icons_to_upload.length }),
       );
       await uploadIcons(serverData.icons_to_upload);
     }
     if (serverData.icons_to_download?.length > 0) {
       setSyncMessage(
-        t("sync.downloadingIcons", { num: serverData.icons_to_download.length })
+        t("sync.downloadingIcons", {
+          num: serverData.icons_to_download.length,
+        }),
       );
       await downloadIcons(serverData.icons_to_download);
     }
@@ -892,7 +894,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
           currentSessionId,
           "failed",
           undefined,
-          errorMessage
+          errorMessage,
         );
       }
       return;
@@ -904,7 +906,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
           currentSessionId,
           "failed",
           undefined,
-          errorMessage
+          errorMessage,
         );
       }
       return;
@@ -916,7 +918,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
           currentSessionId,
           "failed",
           undefined,
-          errorMessage
+          errorMessage,
         );
       }
       return;
@@ -928,7 +930,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         currentSessionId,
         "failed",
         undefined,
-        errorMessage
+        errorMessage,
       );
     }
   } finally {
@@ -946,7 +948,7 @@ export async function getLastSyncRevision(userUuid: string): Promise<number> {
   try {
     const result = await dbClient.select<{ last_synced_rev: number }>(
       `SELECT last_synced_rev FROM ${SYNC_METADATA_TABLE_NAME} WHERE user_uuid = $1`,
-      [userUuid]
+      [userUuid],
     );
 
     if (result.length > 0 && typeof result[0].last_synced_rev === "number") {
@@ -966,7 +968,7 @@ export async function getLastSyncRevision(userUuid: string): Promise<number> {
  */
 export async function updateLastSyncRevision(
   userUuid: string,
-  revision: number
+  revision: number,
 ): Promise<void> {
   try {
     const query = `

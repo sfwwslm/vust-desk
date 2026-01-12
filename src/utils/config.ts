@@ -39,7 +39,7 @@ interface AppConfig {
 async function getAppConfigFile(): Promise<string> {
   return await join(
     await getAppConfigDir(),
-    import.meta.env.PROD ? APP_CONFIG_FILE : APP_DEV_CONFIG_FILE
+    import.meta.env.PROD ? APP_CONFIG_FILE : APP_DEV_CONFIG_FILE,
   );
 }
 
@@ -116,7 +116,7 @@ export async function getMinimizeToTrayOnClose(): Promise<boolean> {
  * @param {boolean} enabled - 是否启用。
  */
 export async function setMinimizeToTrayOnClose(
-  enabled: boolean
+  enabled: boolean,
 ): Promise<void> {
   const config = await readConfig();
   config.minimizeToTrayOnClose = enabled;

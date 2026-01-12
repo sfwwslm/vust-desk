@@ -31,8 +31,8 @@ const handleMenuAction = (
   navigate: (path: string) => void,
   openModal: (
     render: (close: () => void) => ReactNode,
-    options?: { key?: string }
-  ) => void
+    options?: { key?: string },
+  ) => void,
 ) => {
   if (item.url === "/help/settings") {
     openModal((close) => <SettingsModal onClose={close} />, {
@@ -49,8 +49,8 @@ const handleMenuAction = (
 const openUserProfileModal = (
   openModal: (
     render: (close: () => void) => ReactNode,
-    options?: { key?: string }
-  ) => void
+    options?: { key?: string },
+  ) => void,
 ) => {
   openModal((close) => <UserProfileModal onClose={close} />, {
     key: "user-profile",
@@ -62,8 +62,8 @@ const buildSubmenuItems = async (
   navigate: (path: string) => void,
   openModal: (
     render: (close: () => void) => ReactNode,
-    options?: { key?: string }
-  ) => void
+    options?: { key?: string },
+  ) => void,
 ) => {
   const menuItems: MenuItem[] = [];
 
@@ -84,7 +84,7 @@ const createAppMenu = async (
   settingsLabel: string,
   toggleThemeLabel: string,
   openSettings: () => void,
-  toggleTheme: () => void
+  toggleTheme: () => void,
 ) => {
   const items = [
     await PredefinedMenuItem.new({ item: { About: null } }),
@@ -120,7 +120,7 @@ const createAppMenu = async (
 const createUserMenu = async (
   menuLabel: string,
   itemLabel: string,
-  openUserEntry: () => void
+  openUserEntry: () => void,
 ) =>
   Submenu.new({
     id: "user-menu",
@@ -186,37 +186,39 @@ export const useMacAppMenu = () => {
           t("menu.app.toggleTheme"),
           () =>
             handleMenuAction(
-              { id: 1001, label: t("menu.help.settings"), url: "/help/settings" },
+              {
+                id: 1001,
+                label: t("menu.help.settings"),
+                url: "/help/settings",
+              },
               navigate,
-              openModal
+              openModal,
             ),
-          toggleTheme
+          toggleTheme,
         );
         const userMenuLabel = activeUser?.username || t("menu.account.entry");
         const userMenu = await createUserMenu(
           userMenuLabel,
           t("menu.account.profile"),
-          () => openUserProfileModal(openModal)
+          () => openUserProfileModal(openModal),
         );
         const editMenu = await createEditMenu(t("menu.edit.title"));
         const windowMenu = await createWindowMenu(t("menu.window.title"));
 
         const navigationSubmenus = await Promise.all(
           otherMenus.map(async (menu) => {
-            const items = menu.children?.length
-              ? menu.children
-              : [{ ...menu }];
+            const items = menu.children?.length ? menu.children : [{ ...menu }];
             const submenuItems = await buildSubmenuItems(
               items,
               navigate,
-              openModal
+              openModal,
             );
             return Submenu.new({
               id: `submenu-${menu.id}`,
               text: menu.label,
               items: submenuItems,
             });
-          })
+          }),
         );
 
         const helpSubmenu = helpMenu
@@ -226,7 +228,7 @@ export const useMacAppMenu = () => {
               items: await buildSubmenuItems(
                 helpMenu.children ?? [],
                 navigate,
-                openModal
+                openModal,
               ),
             })
           : null;
@@ -266,5 +268,12 @@ export const useMacAppMenu = () => {
     return () => {
       cancelled = true;
     };
-  }, [i18n.language, t, navigate, openModal, activeUser?.username, toggleTheme]);
+  }, [
+    i18n.language,
+    t,
+    navigate,
+    openModal,
+    activeUser?.username,
+    toggleTheme,
+  ]);
 };

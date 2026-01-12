@@ -168,7 +168,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
       activationConstraint: {
         distance: 5,
       },
-    })
+    }),
   );
 
   /**
@@ -231,7 +231,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
       await loadGroups();
       setDataChanged(true);
     },
-    [loadGroups]
+    [loadGroups],
   );
 
   /**
@@ -244,7 +244,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
     openConfirm({
       title: t("panel.deleteGroupTitle"),
       message: `${t("panel.deleteGroupMessagePrefix")}"${name}"${t(
-        "panel.deleteGroupMessageSuffix"
+        "panel.deleteGroupMessageSuffix",
       )}`,
       onConfirm: () => handleConfirmDelete(uuid),
     });
@@ -262,7 +262,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
       }
 
       const isNameDuplicate = groups.some(
-        (g) => g.name === groupData.name && g.uuid !== groupData.uuid
+        (g) => g.name === groupData.name && g.uuid !== groupData.uuid,
       );
 
       if (isNameDuplicate) {
@@ -286,7 +286,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
       setIsGroupModalOpen(false);
       setDataChanged(true);
     },
-    [groups, loadGroups, openAlert, activeUser]
+    [groups, loadGroups, openAlert, activeUser],
   );
 
   /**
@@ -307,7 +307,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
           "bookmark_parser",
           {
             path: selectedPath,
-          }
+          },
         );
 
         if (
@@ -338,13 +338,13 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
 
         // 重新获取所有分组数据（包含新创建的）以拿到 ID
         const { groups: updatedGroups } = await panelDb.getPanelData(
-          activeUser.uuid
+          activeUser.uuid,
         );
 
         // 遍历导入的数据，将网站项添加到对应的分组中
         for (const importedGroup of importedGroups) {
           const targetGroup = updatedGroups.find(
-            (g) => g.name === importedGroup.name
+            (g) => g.name === importedGroup.name,
           );
           if (targetGroup) {
             for (const item of importedGroup.items) {

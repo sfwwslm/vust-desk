@@ -121,7 +121,7 @@ const SearchEngineManagementModal: React.FC<
     const isDuplicate = engines.some(
       (engine) =>
         engine.name.toLowerCase() === name.trim().toLowerCase() &&
-        engine.uuid !== editingEngine?.uuid
+        engine.uuid !== editingEngine?.uuid,
     );
 
     if (isDuplicate) {

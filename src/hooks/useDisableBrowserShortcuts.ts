@@ -48,7 +48,9 @@ const isBlockedShortcut = (event: KeyboardEvent) => {
   return false;
 };
 
-export const useDisableBrowserShortcuts = ({ enabled = true }: Options = {}) => {
+export const useDisableBrowserShortcuts = ({
+  enabled = true,
+}: Options = {}) => {
   useEffect(() => {
     if (!enabled) return;
 

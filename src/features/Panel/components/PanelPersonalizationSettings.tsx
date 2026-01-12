@@ -53,7 +53,7 @@ const PanelPersonalizationSettings: React.FC = () => {
     setLiveMargin(persistedMargin);
     document.documentElement.style.setProperty(
       "--panel-side-margin-percent",
-      `${persistedMargin}`
+      `${persistedMargin}`,
     );
   }, [persistedMargin]);
 
@@ -63,7 +63,7 @@ const PanelPersonalizationSettings: React.FC = () => {
     setLiveMargin(newValue);
     document.documentElement.style.setProperty(
       "--panel-side-margin-percent",
-      `${newValue}`
+      `${newValue}`,
     );
   };
 

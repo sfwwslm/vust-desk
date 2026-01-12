@@ -50,7 +50,7 @@ export const getAnonymousUserUuid = async (): Promise<string | null> => {
   try {
     const users = await dbClient.select<{ uuid: string }>(
       "SELECT uuid FROM users WHERE uuid = $1",
-      [ANONYMOUS_USER_UUID]
+      [ANONYMOUS_USER_UUID],
     );
     const firstUser = users[0];
     return firstUser ? firstUser.uuid : null;
@@ -68,7 +68,7 @@ export const getAnonymousUserUuid = async (): Promise<string | null> => {
 export async function getUsernameByUuid(uuid: string): Promise<string | null> {
   const users = await dbClient.select<User>(
     "SELECT username FROM users WHERE uuid = $1",
-    [uuid]
+    [uuid],
   );
   if (users.length > 0) {
     return users[0].username;
@@ -84,7 +84,7 @@ export async function getUsernameByUuid(uuid: string): Promise<string | null> {
  */
 export async function updateUsername(
   uuid: string,
-  newUsername: string
+  newUsername: string,
 ): Promise<void> {
   await dbClient.execute("UPDATE users SET username = $1 WHERE uuid = $2", [
     newUsername,
@@ -101,7 +101,7 @@ export async function updateUsername(
  */
 export async function setUserLoginStatus(
   uuid: string,
-  isLoggedIn: boolean
+  isLoggedIn: boolean,
 ): Promise<void> {
   await dbClient.execute("UPDATE users SET is_logged_in = $1 WHERE uuid = $2", [
     isLoggedIn ? 1 : 0,
@@ -117,11 +117,11 @@ export async function setUserLoginStatus(
  */
 export async function updateUserServerAddress(
   uuid: string,
-  serverAddress: string
+  serverAddress: string,
 ): Promise<void> {
   await dbClient.execute(
     "UPDATE users SET server_address = $1 WHERE uuid = $2",
-    [serverAddress, uuid]
+    [serverAddress, uuid],
   );
   log.info(`用户 ${uuid} 的服务器地址已更新为 ${serverAddress}`);
 }
@@ -135,7 +135,7 @@ export async function updateUserServerAddress(
 export const getAllUsers = async (): Promise<User[]> => {
   try {
     const users = await dbClient.select<User>(
-      "SELECT uuid, username, is_logged_in AS isLoggedIn, server_address AS serverAddress, server_instance_uuid AS serverInstanceUuid, token FROM users WHERE is_logged_in = 1"
+      "SELECT uuid, username, is_logged_in AS isLoggedIn, server_address AS serverAddress, server_instance_uuid AS serverInstanceUuid, token FROM users WHERE is_logged_in = 1",
     );
     return users;
   } catch (error) {
@@ -176,17 +176,23 @@ export const getActiveUserFromStorage = (): User | null => {
  */
 export async function cleanupUnusedIcons(): Promise<number> {
   try {
-    const websiteIcons = await dbClient.select<{ local_icon_path: string | null }>(
-      `SELECT DISTINCT local_icon_path FROM ${WEBSITES_TABLE_NAME} WHERE local_icon_path IS NOT NULL AND is_deleted = 0`
+    const websiteIcons = await dbClient.select<{
+      local_icon_path: string | null;
+    }>(
+      `SELECT DISTINCT local_icon_path FROM ${WEBSITES_TABLE_NAME} WHERE local_icon_path IS NOT NULL AND is_deleted = 0`,
     );
-    const searchEngineIcons = await dbClient.select<{ local_icon_path: string | null }>(
-      `SELECT DISTINCT local_icon_path FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE local_icon_path IS NOT NULL`
+    const searchEngineIcons = await dbClient.select<{
+      local_icon_path: string | null;
+    }>(
+      `SELECT DISTINCT local_icon_path FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE local_icon_path IS NOT NULL`,
     );
 
     const usedIconNames = new Set<string>();
-    websiteIcons.forEach((row) => row.local_icon_path && usedIconNames.add(row.local_icon_path));
+    websiteIcons.forEach(
+      (row) => row.local_icon_path && usedIconNames.add(row.local_icon_path),
+    );
     searchEngineIcons.forEach(
-      (row) => row.local_icon_path && usedIconNames.add(row.local_icon_path)
+      (row) => row.local_icon_path && usedIconNames.add(row.local_icon_path),
     );
 
     const iconsDir = await getIconsDir();
@@ -227,7 +233,7 @@ async function executeWithRetry(
   sql: string,
   params: any[],
   retries = 5,
-  delayMs = 300
+  delayMs = 300,
 ): Promise<void> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -271,15 +277,18 @@ export async function deleteUserWithData(userUuid: string): Promise<void> {
 
     let userResult;
     try {
-      userResult = await db.execute(`DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`, [
-        userUuid,
-      ]);
+      userResult = await db.execute(
+        `DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`,
+        [userUuid],
+      );
     } catch (error: any) {
       const message = error?.toString?.() || "";
       if (message.includes("database is locked")) {
-        await executeWithRetry(db, `DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`, [
-          userUuid,
-        ]);
+        await executeWithRetry(
+          db,
+          `DELETE FROM ${USER_TABLE_NAME} WHERE uuid = $1`,
+          [userUuid],
+        );
         userResult = { rowsAffected: 1 };
       } else {
         throw error;

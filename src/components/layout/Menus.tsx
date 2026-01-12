@@ -107,7 +107,7 @@ const Submenu: React.FC<SubmenuProps> = React.memo(
         ))}
       </SubmenuContainer>
     );
-  }
+  },
 );
 Submenu.displayName = "Submenu"; // 便于 React DevTools 识别，作用是为了方便调试
 
@@ -200,7 +200,7 @@ const Menus: React.FC = () => {
         closeAllSubmenus();
       }
     },
-    [navigate, activeSubmenuId, isHoverMode, closeAllSubmenus]
+    [navigate, activeSubmenuId, isHoverMode, closeAllSubmenus],
   );
 
   /**
@@ -219,7 +219,7 @@ const Menus: React.FC = () => {
       }
       closeAllSubmenus();
     },
-    [navigate, closeAllSubmenus, openModal]
+    [navigate, closeAllSubmenus, openModal],
   );
 
   /**
@@ -241,7 +241,7 @@ const Menus: React.FC = () => {
         }
       }
     },
-    [isHoverMode, lastHoveredWithChildrenId]
+    [isHoverMode, lastHoveredWithChildrenId],
   );
 
   const menuItems = getMenuItems(t);

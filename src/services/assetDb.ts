@@ -5,13 +5,15 @@ import { ASSET_TABLE_NAME, ASSET_CATEGORIES_TABLE_NAME } from "@/constants";
 
 export async function ensureSaleColumns(): Promise<void> {
   const columns = await dbClient.select<{ name: string }>(
-    `PRAGMA table_info(${ASSET_TABLE_NAME})`
+    `PRAGMA table_info(${ASSET_TABLE_NAME})`,
   );
   const columnNames = columns.map((col) => col.name);
 
   const addColumnIfMissing = async (name: string, ddl: string) => {
     if (!columnNames.includes(name)) {
-      await dbClient.execute(`ALTER TABLE ${ASSET_TABLE_NAME} ADD COLUMN ${ddl}`);
+      await dbClient.execute(
+        `ALTER TABLE ${ASSET_TABLE_NAME} ADD COLUMN ${ddl}`,
+      );
     }
   };
 
@@ -30,12 +32,12 @@ export async function ensureSaleColumns(): Promise<void> {
  * @returns {Promise<AssetCategory>} 返回默认分类对象。
  */
 export async function getDefaultCategory(
-  activeUuid: string
+  activeUuid: string,
 ): Promise<AssetCategory> {
   // 通过 is_default 标志查找默认分类
   const result = await dbClient.select<AssetCategory>(
     `SELECT * FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_default = 1 AND is_deleted = 0`,
-    [activeUuid]
+    [activeUuid],
   );
 
   const category = result[0];
@@ -63,7 +65,7 @@ export async function getAssetsData(activeUuid: string): Promise<Asset[]> {
     WHERE a.is_deleted = 0 AND a.user_uuid = $1 AND ac.user_uuid = $1
     ORDER BY a.purchase_date DESC
     `,
-    [activeUuid]
+    [activeUuid],
   );
 
   return await assets;
@@ -77,7 +79,7 @@ export async function getAssetsData(activeUuid: string): Promise<Asset[]> {
 export async function assetExists(uuid: string): Promise<boolean> {
   const result = await dbClient.select<{ count: number }>(
     `SELECT COUNT(*) as count FROM ${ASSET_TABLE_NAME} WHERE uuid = $1 AND is_deleted = 0`,
-    [uuid]
+    [uuid],
   );
   return result.length > 0 && result[0].count > 0;
 }
@@ -144,7 +146,7 @@ export async function saveAsset(asset: Partial<Asset>): Promise<void> {
 export async function deleteCategory(uuid: string): Promise<void> {
   const categoryToDelete = await dbClient.select<AssetCategory>(
     `SELECT * FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE uuid = $1`,
-    [uuid]
+    [uuid],
   );
 
   // 防止删除默认分类
@@ -154,12 +156,12 @@ export async function deleteCategory(uuid: string): Promise<void> {
 
   await dbClient.execute(
     `UPDATE ${ASSET_TABLE_NAME} SET category_uuid = $1 WHERE category_uuid = $2`,
-    [ANONYMOUS_USER_UUID, uuid]
+    [ANONYMOUS_USER_UUID, uuid],
   );
 
   await dbClient.execute(
     `UPDATE ${ASSET_CATEGORIES_TABLE_NAME} SET is_deleted = 1 WHERE uuid = $1`,
-    [uuid]
+    [uuid],
   );
 }
 
@@ -168,11 +170,11 @@ export async function deleteCategory(uuid: string): Promise<void> {
  * @returns {Promise<AssetCategory[]>}
  */
 export async function getAllCategories(
-  activeUuid: string
+  activeUuid: string,
 ): Promise<AssetCategory[]> {
   const categories = await dbClient.select<AssetCategory>(
     `SELECT * FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1 AND is_deleted = 0 ORDER BY name ASC`,
-    [activeUuid]
+    [activeUuid],
   );
 
   // 将默认分类置顶
@@ -197,19 +199,19 @@ export async function getAllCategories(
  * @param {Partial<AssetCategory>} category - 分类数据。
  */
 export async function saveCategory(
-  category: Partial<AssetCategory>
+  category: Partial<AssetCategory>,
 ): Promise<void> {
   if (category.uuid) {
     // 更新
     await dbClient.execute(
       `UPDATE ${ASSET_CATEGORIES_TABLE_NAME} SET name = $1 WHERE uuid = $2 AND user_uuid = $3`,
-      [category.name, category.uuid, category.user_uuid]
+      [category.name, category.uuid, category.user_uuid],
     );
   } else {
     // 新增
     await dbClient.execute(
       `INSERT INTO ${ASSET_CATEGORIES_TABLE_NAME} (uuid, user_uuid, name) VALUES ($1, $2, $3)`,
-      [crypto.randomUUID(), category.user_uuid, category.name]
+      [crypto.randomUUID(), category.user_uuid, category.name],
     );
   }
 }
@@ -221,6 +223,6 @@ export async function saveCategory(
 export async function deleteAsset(uuid: string): Promise<void> {
   await dbClient.execute(
     `UPDATE ${ASSET_TABLE_NAME} SET is_deleted = 1 WHERE uuid = $1`,
-    [uuid]
+    [uuid],
   );
 }

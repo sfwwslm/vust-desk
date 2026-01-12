@@ -151,15 +151,15 @@ const AccountSwitcherModal: React.FC<AccountSwitcherModalProps> = ({
 
               {user.uuid !== ANONYMOUS_USER_UUID &&
                 user.uuid !== activeUser?.uuid && (
-                <>
-                  <StyledButton
-                    variant="ghost"
-                    onClick={() => handleLogout(user)}
-                  >
-                    {t("account.logoutButton")}
-                  </StyledButton>
-                </>
-              )}
+                  <>
+                    <StyledButton
+                      variant="ghost"
+                      onClick={() => handleLogout(user)}
+                    >
+                      {t("account.logoutButton")}
+                    </StyledButton>
+                  </>
+                )}
             </Actions>
           </UserListItem>
         ))}

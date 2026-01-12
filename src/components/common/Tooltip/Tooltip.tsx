@@ -85,7 +85,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, text }) => {
           >
             {text}
           </TooltipText>,
-          document.body // 指定传送的目标 DOM 节点
+          document.body, // 指定传送的目标 DOM 节点
         )}
     </TooltipContainer>
   );

@@ -17,7 +17,7 @@ type EnvironmentContextType = {
 };
 
 const EnvironmentContext = createContext<EnvironmentContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const EnvironmentProvider = ({ children }: { children: ReactNode }) => {
@@ -49,7 +49,7 @@ export const useEnvironment = () => {
   const context = useContext(EnvironmentContext);
   if (!context) {
     throw new Error(
-      "useEnvironment must be used within an EnvironmentProvider"
+      "useEnvironment must be used within an EnvironmentProvider",
     );
   }
   return context;

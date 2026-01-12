@@ -25,7 +25,8 @@ export const SummarySection = styled.div<{ theme: Theme }>`
   text-align: center;
   font-size: 0.95rem;
   color: ${(props) => props.theme.colors.textSecondary};
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -2px rgba(0, 0, 0, 0.05);
   flex-shrink: 0; /* 防止摘要区域被压缩 */
 
@@ -41,7 +42,8 @@ export const TableSection = styled.section<{ theme: Theme }>`
   background-color: ${(props) => props.theme.colors.surface};
   border: 1px solid ${(props) => props.theme.colors.border};
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -2px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
   /* 纵向 flex 布局，并占据所有剩余空间 */
@@ -127,8 +129,7 @@ export const StyledTable = styled.table`
 
 export const TableHeaderCell = styled.th<{ theme: Theme }>`
   padding: 0.75rem 1.5rem;
-  background-color: ${(props) =>
-    props.theme.colors.border};
+  background-color: ${(props) => props.theme.colors.border};
   color: ${(props) => props.theme.colors.textPrimary};
   text-transform: uppercase;
   cursor: pointer;
@@ -138,7 +139,7 @@ export const TableHeaderCell = styled.th<{ theme: Theme }>`
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
   position: sticky; /* 让表头在滚动时固定 */
   top: 0;
-  z-index: ${(props) => props.theme.zIndices.sticky};;
+  z-index: ${(props) => props.theme.zIndices.sticky};
   text-align: center;
 
   &:first-child {
@@ -236,7 +237,7 @@ export const ActionCell = styled(TableCell)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  justify-content: center; 
+  justify-content: center;
 `;
 
 export const NoResultsMessage = styled.div<{ theme: Theme }>`
@@ -266,7 +267,9 @@ export const PageButton = styled.button<{ theme: Theme }>`
   background-color: ${(props) => props.theme.colors.surface};
   color: ${(props) => props.theme.colors.textPrimary};
   min-width: 2.5rem;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 
   &:hover:enabled {
     background-color: ${(props) => props.theme.colors.primaryFocus};

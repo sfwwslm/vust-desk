@@ -270,7 +270,9 @@ export const PanelCard = styled(motion.div)<{
 
   // 交互样式
   cursor: ${(props) => (props.isSorting ? "grab" : "pointer")};
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   // 拖拽状态
   opacity: ${(props) => (props.isDragging ? 0.8 : 1)};
