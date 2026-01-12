@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "prune": "ts-prune",
+    "format": "prettier --write src/",
     "td": "tauri dev --config src-tauri/tauri.dev.json",
     "tw": "tauri dev --config src-tauri/tauri.windows.conf.json",
     "tm": "tauri dev --config src-tauri/tauri.macos.conf.json",
@@ -53,6 +54,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "rollup-plugin-visualizer": "6.0.5",
     "ts-prune": "0.10.3",
+    "prettier": "3.6.2",
     "typescript": "5.9.3",
     "vite": "7.3.0"
   }
