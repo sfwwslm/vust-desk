@@ -49,6 +49,7 @@ const MIN_SERVER_VERSION = "0.0.5";
 const ACCOUNT_DELETED_CODE = 403;
 const ACCOUNT_NOT_FOUND_CODE = 401;
 const ACCOUNT_DISABLED_CODE = 403;
+const TOKEN_EXPIRED_CODE = 401;
 
 const isAccountDeletedMessage = (message: string | undefined) => {
   if (!message) return false;
@@ -70,11 +71,24 @@ const isAccountNotFoundMessage = (message: string | undefined) => {
   );
 };
 
+const isTokenExpiredMessage = (message: string | undefined) => {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("过期的令牌") ||
+    lower.includes("token expired") ||
+    lower.includes("jwt expired") ||
+    lower.includes("expired token")
+  );
+};
+
 const isAccountDeletedResponse = (resp?: ApiResponse<any>) =>
   !!resp &&
   !resp.success &&
-  ((resp.code === ACCOUNT_DELETED_CODE && isAccountDeletedMessage(resp.message)) ||
-    (resp.code === ACCOUNT_NOT_FOUND_CODE && isAccountNotFoundMessage(resp.message)));
+  ((resp.code === ACCOUNT_DELETED_CODE &&
+    isAccountDeletedMessage(resp.message)) ||
+    (resp.code === ACCOUNT_NOT_FOUND_CODE &&
+      isAccountNotFoundMessage(resp.message)));
 
 const isAccountDisabledMessage = (message: string | undefined) => {
   if (!message) return false;
@@ -91,6 +105,12 @@ const isAccountDisabledResponse = (resp?: ApiResponse<any>) =>
   !resp.success &&
   resp.code === ACCOUNT_DISABLED_CODE &&
   isAccountDisabledMessage(resp.message);
+
+const isTokenExpiredResponse = (resp?: ApiResponse<any>) =>
+  !!resp &&
+  !resp.success &&
+  resp.code === TOKEN_EXPIRED_CODE &&
+  isTokenExpiredMessage(resp.message);
 
 const isVersionGte = (version: string, minimum: string): boolean => {
   const parse = (v: string) => v.split(".").map((n) => parseInt(n, 10) || 0);
@@ -111,8 +131,39 @@ function formatError(err: unknown): string {
   }
 }
 
+function tryParseApiResponse(err: unknown): ApiResponse<any> | undefined {
+  if (!err) return undefined;
+  if (typeof err === "object" && "success" in err && "code" in err) {
+    return err as ApiResponse<any>;
+  }
+  const raw =
+    err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  if (!raw) return undefined;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) return undefined;
+  const jsonText = raw.slice(start, end + 1);
+  try {
+    const parsed = JSON.parse(jsonText);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "success" in parsed &&
+      "code" in parsed
+    ) {
+      return parsed as ApiResponse<any>;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 // 同步日志：插入一条记录
-async function createSyncLog(sessionId: string, userUuid: string): Promise<void> {
+async function createSyncLog(
+  sessionId: string,
+  userUuid: string
+): Promise<void> {
   const now = new Date().toISOString();
   try {
     await dbClient.execute(
@@ -406,44 +457,44 @@ const runSyncPrerequisites = async (
     );
 
     // 验证用户 Token
-  const clientInfoDto: ClientInfoDto = {
-    app_version: await getVersion(),
-    username: user.username,
-    token: user.token || "",
-    server_address: user.serverAddress || "",
-  };
+    const clientInfoDto: ClientInfoDto = {
+      app_version: await getVersion(),
+      username: user.username,
+      token: user.token || "",
+      server_address: user.serverAddress || "",
+    };
 
     /// 校验 Token 和 用户名是否发送变更
     await invoke("check_token_and_user", {
       client_info: clientInfoDto,
     });
 
-  /// 校验版本兼容性
-  await invoke("check_client_version", {
-    client_info: clientInfoDto,
-  });
+    /// 校验版本兼容性
+    await invoke("check_client_version", {
+      client_info: clientInfoDto,
+    });
 
-  // 校验服务器版本
-  setSyncMessage(t("sync.verifyingServer"));
-  if (!user.serverAddress) {
-    throw new Error("服务器地址未配置，无法校验版本");
-  }
-  const serverVersionResp: ApiResponse<VersionInfo> = await invoke(
-    "check_server_version",
-    { server_address: user.serverAddress }
-  );
-  const serverVersion = serverVersionResp.data?.version;
-  if (!serverVersion || !isVersionGte(serverVersion, MIN_SERVER_VERSION)) {
-    throw new Error(
-      t("sync.serverTooOld", {
-        version: serverVersion || "unknown",
-        required: MIN_SERVER_VERSION,
-      })
+    // 校验服务器版本
+    setSyncMessage(t("sync.verifyingServer"));
+    if (!user.serverAddress) {
+      throw new Error("服务器地址未配置，无法校验版本");
+    }
+    const serverVersionResp: ApiResponse<VersionInfo> = await invoke(
+      "check_server_version",
+      { server_address: user.serverAddress }
     );
-  }
+    const serverVersion = serverVersionResp.data?.version;
+    if (!serverVersion || !isVersionGte(serverVersion, MIN_SERVER_VERSION)) {
+      throw new Error(
+        t("sync.serverTooOld", {
+          version: serverVersion || "unknown",
+          required: MIN_SERVER_VERSION,
+        })
+      );
+    }
 
-  // 添加兼容性验证等
-} finally {
+    // 添加兼容性验证等
+  } finally {
     // 清理监听器
     if (unlisten) {
       unlisten();
@@ -471,12 +522,11 @@ const handleAccountDeletedOnServer = async (
   try {
     await deleteUserWithData(user.uuid);
     const users = await refreshAvailableUsers();
-    const anonymous =
-      users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
-        uuid: ANONYMOUS_USER_UUID,
-        username: ANONYMOUS_USER,
-        isLoggedIn: 1,
-      };
+    const anonymous = users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+      uuid: ANONYMOUS_USER_UUID,
+      username: ANONYMOUS_USER,
+      isLoggedIn: 1,
+    };
 
     switchActiveUser(anonymous);
     incrementDataVersion();
@@ -503,18 +553,46 @@ const handleAccountDisabledOnServer = async (
   try {
     await setUserLoginStatus(user.uuid, false);
     const users = await refreshAvailableUsers();
-    const anonymous =
-      users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
-        uuid: ANONYMOUS_USER_UUID,
-        username: ANONYMOUS_USER,
-        isLoggedIn: 1,
-      };
+    const anonymous = users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+      uuid: ANONYMOUS_USER_UUID,
+      username: ANONYMOUS_USER,
+      isLoggedIn: 1,
+    };
     switchActiveUser(anonymous);
     setSyncMessage(t("sync.accountDisabledSignedOut"));
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     log.error(`服务器禁用账号，本地登出失败: ${errMsg}`);
     setSyncMessage(t("sync.accountDisabledSignoutFailed", { error: errMsg }));
+  }
+};
+
+const handleTokenExpiredOnServer = async (
+  user: User,
+  updaters: SyncStatusUpdaters,
+  serverMessage?: string
+) => {
+  const { setSyncMessage, switchActiveUser, refreshAvailableUsers, t } =
+    updaters;
+
+  setSyncMessage(
+    t("sync.tokenExpiredOnServer", { reason: serverMessage || "" })
+  );
+
+  try {
+    await setUserLoginStatus(user.uuid, false);
+    const users = await refreshAvailableUsers();
+    const anonymous = users.find((u) => u.uuid === ANONYMOUS_USER_UUID) || {
+      uuid: ANONYMOUS_USER_UUID,
+      username: ANONYMOUS_USER,
+      isLoggedIn: 1,
+    };
+    switchActiveUser(anonymous);
+    setSyncMessage(t("sync.tokenExpiredSignedOut"));
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    log.error(`令牌过期，本地登出失败: ${errMsg}`);
+    setSyncMessage(t("sync.tokenExpiredSignoutFailed", { error: errMsg }));
   }
 };
 /**
@@ -564,7 +642,9 @@ async function sendDataInChunks<T>(
       } catch (err) {
         attempt += 1;
         const backoff = 300 * attempt;
-        log.warn(`发送分块失败，正在重试(${attempt}/${maxRetries})，等待 ${backoff}ms: ${err}`);
+        log.warn(
+          `发送分块失败，正在重试(${attempt}/${maxRetries})，等待 ${backoff}ms: ${err}`
+        );
         if (attempt >= maxRetries) {
           throw err;
         }
@@ -606,7 +686,9 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     try {
       const iconsDir = await getIconsDir();
       const entries = await readDir(iconsDir);
-      localIcons = entries.map((entry) => entry.name).filter(Boolean) as string[];
+      localIcons = entries
+        .map((entry) => entry.name)
+        .filter(Boolean) as string[];
     } catch (e) {
       log.warn(`扫描本地图标目录失败: ${e}。`);
     }
@@ -623,12 +705,24 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
       { user, payload: startPayload }
     );
     if (!startResponse.success || !startResponse.data) {
+      if (isTokenExpiredResponse(startResponse)) {
+        await handleTokenExpiredOnServer(user, updaters, startResponse.message);
+        return;
+      }
       if (isAccountDisabledResponse(startResponse)) {
-        await handleAccountDisabledOnServer(user, updaters, startResponse.message);
+        await handleAccountDisabledOnServer(
+          user,
+          updaters,
+          startResponse.message
+        );
         return;
       }
       if (isAccountDeletedResponse(startResponse)) {
-        await handleAccountDeletedOnServer(user, updaters, startResponse.message);
+        await handleAccountDeletedOnServer(
+          user,
+          updaters,
+          startResponse.message
+        );
         return;
       }
       throw new Error(`开启同步会话失败: ${startResponse.message}`);
@@ -636,30 +730,61 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     const sessionId = startResponse.data.session_id;
     currentSessionId = sessionId;
     await createSyncLog(sessionId, user.uuid);
-    if (startResponse.data.suggested_chunk_size && startResponse.data.suggested_chunk_size > 0) {
+    if (
+      startResponse.data.suggested_chunk_size &&
+      startResponse.data.suggested_chunk_size > 0
+    ) {
       chunkSize = startResponse.data.suggested_chunk_size;
       log.info(`采用服务器建议的分块大小: ${chunkSize}`);
     }
 
     // 4. 分块发送各类数据
     const dataToSend = [
-      { type: DataType.WebsiteGroups, query: `SELECT uuid, name, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1` },
-      { type: DataType.Websites, query: `SELECT uuid, group_uuid, title, url, url_lan, default_icon, local_icon_path, background_color, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1` },
-      { type: DataType.AssetCategories, query: `SELECT uuid, name, is_default, is_deleted, rev, updated_at FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1` },
+      {
+        type: DataType.WebsiteGroups,
+        query: `SELECT uuid, name, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITE_GROUPS_TABLE_NAME} WHERE user_uuid = $1`,
+      },
+      {
+        type: DataType.Websites,
+        query: `SELECT uuid, group_uuid, title, url, url_lan, default_icon, local_icon_path, background_color, description, sort_order, is_deleted, rev, updated_at FROM ${WEBSITES_TABLE_NAME} WHERE user_uuid = $1`,
+      },
+      {
+        type: DataType.AssetCategories,
+        query: `SELECT uuid, name, is_default, is_deleted, rev, updated_at FROM ${ASSET_CATEGORIES_TABLE_NAME} WHERE user_uuid = $1`,
+      },
       {
         type: DataType.Assets,
         query: `SELECT uuid, category_uuid, name, purchase_date, price, expiration_date, description, is_deleted, rev, updated_at, brand, model, serial_number, status, sale_price, sale_date, fees, buyer, notes, realized_profit FROM ${ASSET_TABLE_NAME} WHERE user_uuid = $1`,
       },
-      { type: DataType.SearchEngines, query: `SELECT uuid, name, url_template, default_icon, local_icon_path, is_default, sort_order, is_deleted, rev, updated_at FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1` },
+      {
+        type: DataType.SearchEngines,
+        query: `SELECT uuid, name, url_template, default_icon, local_icon_path, is_default, sort_order, is_deleted, rev, updated_at FROM ${SEARCH_ENGINES_TABLE_NAME} WHERE user_uuid = $1`,
+      },
     ];
 
     for (const { type, query } of dataToSend) {
       const data = await dbClient.select<any[]>(query, [user.uuid]);
-      await sendDataInChunks(user, sessionId, type, data, setSyncMessage, t, chunkSize);
+      await sendDataInChunks(
+        user,
+        sessionId,
+        type,
+        data,
+        setSyncMessage,
+        t,
+        chunkSize
+      );
     }
 
     // 单独处理并发送 localIcons
-    await sendDataInChunks(user, sessionId, DataType.LocalIcons, localIcons, setSyncMessage, t, chunkSize);
+    await sendDataInChunks(
+      user,
+      sessionId,
+      DataType.LocalIcons,
+      localIcons,
+      setSyncMessage,
+      t,
+      chunkSize
+    );
 
     // 5. 完成同步会话并处理服务器返回的数据
     setSyncMessage(t("sync.completingSync"));
@@ -674,12 +799,28 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     }
 
     if (!completeResponse.success || !completeResponse.data) {
+      if (isTokenExpiredResponse(completeResponse)) {
+        await handleTokenExpiredOnServer(
+          user,
+          updaters,
+          completeResponse.message
+        );
+        return;
+      }
       if (isAccountDisabledResponse(completeResponse)) {
-        await handleAccountDisabledOnServer(user, updaters, completeResponse.message);
+        await handleAccountDisabledOnServer(
+          user,
+          updaters,
+          completeResponse.message
+        );
         return;
       }
       if (isAccountDeletedResponse(completeResponse)) {
-        await handleAccountDeletedOnServer(user, updaters, completeResponse.message);
+        await handleAccountDeletedOnServer(
+          user,
+          updaters,
+          completeResponse.message
+        );
         return;
       }
       throw new Error(`完成同步失败: ${completeResponse.message}`);
@@ -693,11 +834,15 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     }
 
     if (serverData.icons_to_upload?.length > 0) {
-      setSyncMessage(t("sync.uploadingIcons", { num: serverData.icons_to_upload.length }));
+      setSyncMessage(
+        t("sync.uploadingIcons", { num: serverData.icons_to_upload.length })
+      );
       await uploadIcons(serverData.icons_to_upload);
     }
     if (serverData.icons_to_download?.length > 0) {
-      setSyncMessage(t("sync.downloadingIcons", { num: serverData.icons_to_download.length }));
+      setSyncMessage(
+        t("sync.downloadingIcons", { num: serverData.icons_to_download.length })
+      );
       await downloadIcons(serverData.icons_to_download);
     }
 
@@ -709,9 +854,11 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
     if (currentSessionId) {
       await finalizeSyncLog(currentSessionId, "success", summaryText);
     }
-
   } catch (error: any) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const apiResponse = tryParseApiResponse(error);
+    const errorMessage =
+      apiResponse?.message ||
+      (error instanceof Error ? error.message : String(error));
     const isAccountDeleted =
       isAccountDeletedMessage(errorMessage) ||
       isAccountNotFoundMessage(errorMessage) ||
@@ -729,31 +876,65 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
         "code" in error &&
         (error as any).code === ACCOUNT_DISABLED_CODE &&
         isAccountDisabledMessage(String((error as any).message || "")));
+    const isTokenExpired =
+      isTokenExpiredMessage(errorMessage) ||
+      isTokenExpiredResponse(apiResponse) ||
+      (error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as any).code === TOKEN_EXPIRED_CODE &&
+        isTokenExpiredMessage(String((error as any).message || "")));
 
     if (isAccountDeleted) {
       await handleAccountDeletedOnServer(user, updaters, errorMessage);
       if (currentSessionId) {
-        await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+        await finalizeSyncLog(
+          currentSessionId,
+          "failed",
+          undefined,
+          errorMessage
+        );
       }
       return;
     }
     if (isAccountDisabled) {
       await handleAccountDisabledOnServer(user, updaters, errorMessage);
       if (currentSessionId) {
-        await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+        await finalizeSyncLog(
+          currentSessionId,
+          "failed",
+          undefined,
+          errorMessage
+        );
+      }
+      return;
+    }
+    if (isTokenExpired) {
+      await handleTokenExpiredOnServer(user, updaters, errorMessage);
+      if (currentSessionId) {
+        await finalizeSyncLog(
+          currentSessionId,
+          "failed",
+          undefined,
+          errorMessage
+        );
       }
       return;
     }
 
     setSyncMessage(t("sync.syncFailed", { error: errorMessage }));
     if (currentSessionId) {
-      await finalizeSyncLog(currentSessionId, "failed", undefined, errorMessage);
+      await finalizeSyncLog(
+        currentSessionId,
+        "failed",
+        undefined,
+        errorMessage
+      );
     }
   } finally {
     setSyncCompleted(true);
   }
 };
-
 
 /**
  * @function getLastSyncTimestamp
@@ -761,9 +942,7 @@ export const startSync = async (user: User, updaters: SyncStatusUpdaters) => {
  * @param {string} userUuid - 用户的 UUID。
  * @returns {Promise<string | null>} 如果找到了时间戳，则返回其字符串形式，否则返回 null。
  */
-export async function getLastSyncRevision(
-  userUuid: string
-): Promise<number> {
+export async function getLastSyncRevision(userUuid: string): Promise<number> {
   try {
     const result = await dbClient.select<{ last_synced_rev: number }>(
       `SELECT last_synced_rev FROM ${SYNC_METADATA_TABLE_NAME} WHERE user_uuid = $1`,

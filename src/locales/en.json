@@ -341,6 +341,9 @@
     "accountDisabledOnServer": "The account is disabled on the server. Signing out (data kept).",
     "accountDisabledSignedOut": "The account was disabled; signed out locally. Data remains intact.",
     "accountDisabledSignoutFailed": "The account was disabled, but local sign-out failed: {{error}}",
+    "tokenExpiredOnServer": "Token expired on the server. Signing out. {{reason}}",
+    "tokenExpiredSignedOut": "Token expired; signed out locally. Please log in again.",
+    "tokenExpiredSignoutFailed": "Token expired, but local sign-out failed: {{error}}",
     "syncFailed": "Sync failed: {{error}}",
     "serverUserUpdated": "Server user information has changed, local user information has been updated!",
     "serverTooOld": "Server version too low (current {{version}}, require >= {{required}}). Please upgrade the server."
