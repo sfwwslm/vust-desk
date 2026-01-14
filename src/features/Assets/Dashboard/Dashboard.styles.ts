@@ -105,7 +105,6 @@ export const SearchInput = styled.input<{ theme: Theme }>`
 `;
 
 export const TableWrapper = styled.div<{ theme: Theme }>`
-  overflow-y: auto; /* 内容超出时出现滚动条 */
   border-radius: 0.5rem;
   border: 1px solid ${(props) => props.theme.colors.border};
   /* 占据父元素（TableSection）的所有剩余空间 */
@@ -113,6 +112,7 @@ export const TableWrapper = styled.div<{ theme: Theme }>`
   display: flex; /* 让内部元素（table 或提示信息）可以撑满 */
   flex-direction: column;
   min-height: 0; /* 防止内部内容撑开导致父级溢出 */
+  overflow: hidden;
 `;
 
 export const StyledTable = styled.table`
@@ -120,11 +120,20 @@ export const StyledTable = styled.table`
   font-size: 0.875rem;
   text-align: left;
   color: ${(props) => props.theme.colors.textSecondary};
+  table-layout: fixed;
+  border-collapse: collapse;
 
   /* 当有数据时，表格高度自适应 */
   tbody tr {
     display: table-row;
   }
+`;
+
+export const TableBodyWrapper = styled.div`
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 `;
 
 export const TableHeaderCell = styled.th<{ theme: Theme }>`
@@ -137,9 +146,6 @@ export const TableHeaderCell = styled.th<{ theme: Theme }>`
   white-space: nowrap;
   user-select: none;
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
-  position: sticky; /* 让表头在滚动时固定 */
-  top: 0;
-  z-index: ${(props) => props.theme.zIndices.sticky};
   text-align: center;
 
   &:first-child {
@@ -170,6 +176,7 @@ export const TableRow = styled.tr<{ theme: Theme }>`
   background-color: ${(props) => props.theme.colors.surface};
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
   transition: background-color 0.2s ease;
+  height: var(--asset-row-height, auto);
 
   &:last-child {
     border-bottom: none; /* 移除最后一行底部的边框 */
@@ -190,6 +197,7 @@ export const TableCell = styled.td`
   white-space: nowrap;
   color: ${(props) => props.theme.colors.textPrimary};
   text-align: center;
+  height: var(--asset-row-height, auto);
 `;
 
 export const ActionButton = styled.button<{ theme: Theme }>`
