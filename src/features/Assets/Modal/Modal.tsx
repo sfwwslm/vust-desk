@@ -1,12 +1,14 @@
 import React from "react";
-import {
-  Overlay,
-  ModalContainer,
-  CloseButton,
-  ModalTitle,
-} from "@/components/styled/StyledModal";
+import { Overlay } from "@/components/styled/StyledModal";
 import { ModalProps } from "@/features/Assets/types";
 import { IoCloseSharp } from "react-icons/io5";
+import {
+  AssetModalBody,
+  AssetModalCloseButton,
+  AssetModalContainer,
+  AssetModalHeader,
+  AssetModalTitle,
+} from "./Modal.styles";
 
 /**
  * @component Modal
@@ -27,7 +29,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
       transition={{ duration: 0.3 }}
     >
       {/* ModalContainer 动画：初始Y轴偏移，进入时弹出，退出时缩放消失 */}
-      <ModalContainer
+      <AssetModalContainer
         className="modal-container"
         initial={{ y: -50, opacity: 0, scale: 0.8 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -35,12 +37,24 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()} // 阻止事件冒泡，避免点击模态框内容关闭模态框
       >
-        <CloseButton onClick={onClose} aria-label="Close modal">
-          <IoCloseSharp />
-        </CloseButton>
-        {title && <ModalTitle>{title}</ModalTitle>}
-        {children}
-      </ModalContainer>
+        <AssetModalHeader className="asset-modal__header">
+          {title && (
+            <AssetModalTitle className="asset-modal__title">
+              {title}
+            </AssetModalTitle>
+          )}
+          <AssetModalCloseButton
+            className="asset-modal__close"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            <IoCloseSharp />
+          </AssetModalCloseButton>
+        </AssetModalHeader>
+        <AssetModalBody className="asset-modal__body">
+          {children}
+        </AssetModalBody>
+      </AssetModalContainer>
     </Overlay>
   );
 };

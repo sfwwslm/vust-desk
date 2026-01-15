@@ -19,6 +19,7 @@ interface CustomSelectProps {
   value: string | number | undefined;
   onChange: (value: string | number) => void;
   placeholder?: string;
+  className?: string;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -26,6 +27,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   value,
   onChange,
   placeholder = "请选择...",
+  className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <SelectContainer ref={selectRef}>
+    <SelectContainer ref={selectRef} className={className}>
       <SelectedValue $isOpen={isOpen} onClick={() => setIsOpen(!isOpen)}>
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <ArrowIcon $isOpen={isOpen} />
