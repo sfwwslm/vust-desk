@@ -33,7 +33,6 @@ import {
   SearchInput,
   TableWrapper,
   StyledTable,
-  TableBodyWrapper,
   TableHeaderCell,
   TableBody,
   TableRow,
@@ -42,6 +41,7 @@ import {
   EditButton,
   DeleteButton,
   ActionCell,
+  ActionCellContent,
   NoResultsMessage,
   PaginationContainer,
   PageButton,
@@ -72,7 +72,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(MIN_ITEMS_PER_PAGE);
   const [rowHeight, setRowHeight] = useState<number | null>(null);
-  const tableBodyWrapperRef = useRef<HTMLDivElement | null>(null);
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -236,7 +236,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   }, [sortedAndFilteredAssets, currentPage, itemsPerPage]);
 
   const updateItemsPerPage = useCallback(() => {
-    const wrapper = tableBodyWrapperRef.current;
+    const wrapper = tableWrapperRef.current;
     if (!wrapper) return;
 
     const row = wrapper.querySelector("tbody tr") as HTMLElement | null;
@@ -265,7 +265,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
   ]);
 
   useEffect(() => {
-    const wrapper = tableBodyWrapperRef.current;
+    const wrapper = tableWrapperRef.current;
     if (!wrapper) return;
     const observer = new ResizeObserver(() => updateItemsPerPage());
     observer.observe(wrapper);
@@ -332,8 +332,12 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
 
   return (
     <>
-      <DashboardContainer theme={theme}>
-        <SummarySection theme={theme} id="asset-summary">
+      <DashboardContainer theme={theme} className="asset-dashboard">
+        <SummarySection
+          theme={theme}
+          id="asset-summary"
+          className="asset-dashboard__summary"
+        >
           <span>
             {t("management.asset.holdingAssetsLabel")}:{" "}
             <strong>{kpis.holdingCount}</strong>
@@ -367,21 +371,26 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
           </span>
         </SummarySection>
 
-        <TableSection theme={theme}>
-          <TableHeader id="asset-header">
-            <TableTitle theme={theme}>
+        <TableSection theme={theme} className="asset-dashboard__table-section">
+          <TableHeader
+            id="asset-header"
+            className="asset-dashboard__table-header"
+          >
+            <TableTitle theme={theme} className="asset-dashboard__table-title">
               {t("management.asset.assetList")}
             </TableTitle>
-            <TableActionsContainer>
+            <TableActionsContainer className="asset-dashboard__table-actions">
               <SearchInput
                 id="asset-search-input"
                 theme={theme}
+                className="asset-dashboard__search-input"
                 type="text"
                 placeholder={t("management.asset.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <div
+                className="asset-dashboard__show-sold"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -391,6 +400,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                 <input
                   id="show-sold-toggle"
                   type="checkbox"
+                  className="asset-dashboard__show-sold-toggle"
                   checked={showSold}
                   onChange={(e) => setShowSold(e.target.checked)}
                 />
@@ -402,6 +412,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                 id="asset-category-button"
                 onClick={() => setIsCategoryModalOpen(true)}
                 theme={theme}
+                className="asset-dashboard__category-button"
               >
                 <IoApps size={20} />
                 {t("management.asset.category.manage")}
@@ -410,198 +421,222 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                 id="asset-add-button"
                 onClick={handleAdd}
                 theme={theme}
+                className="asset-dashboard__add-button"
               >
                 <IoAdd size={20} />
                 {t("management.asset.addAsset")}
               </ActionButton>
             </TableActionsContainer>
           </TableHeader>
-          <TableWrapper theme={theme} id="asset-list">
+          <TableWrapper
+            theme={theme}
+            id="asset-list"
+            ref={tableWrapperRef}
+            className="asset-dashboard__table-wrapper"
+            style={
+              rowHeight !== null
+                ? ({
+                    ...(rowHeight !== null
+                      ? { "--asset-row-height": `${rowHeight}px` }
+                      : {}),
+                  } as React.CSSProperties)
+                : undefined
+            }
+          >
             {sortedAndFilteredAssets.length > 0 ? (
-              <>
-                <StyledTable theme={theme}>
-                  <thead>
-                    <tr id="asset-title">
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("name")}
-                        data-sort-active={sortConfig.key === "name"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.name")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("brand")}
-                        data-sort-active={sortConfig.key === "brand"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.brand")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("category_name")}
-                        data-sort-active={sortConfig.key === "category_name"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.category.category")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("price")}
-                        data-sort-active={sortConfig.key === "price"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("common.price")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("purchase_date")}
-                        data-sort-active={sortConfig.key === "purchase_date"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("common.purchaseDate")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("status")}
-                        data-sort-active={sortConfig.key === "status"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.status")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("sale_price")}
-                        data-sort-active={sortConfig.key === "sale_price"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.salePriceShort")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("sale_date")}
-                        data-sort-active={sortConfig.key === "sale_date"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.saleDateShort")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell
-                        theme={theme}
-                        onClick={() => handleSort("realized_profit")}
-                        data-sort-active={sortConfig.key === "realized_profit"}
-                      >
-                        <Tooltip text={t("common.sortTooltip")}>
-                          <span>{t("management.asset.realizedProfit")}</span>
-                        </Tooltip>
-                      </TableHeaderCell>
-                      <TableHeaderCell theme={theme}>
-                        {t("common.actions")}
-                      </TableHeaderCell>
-                    </tr>
-                  </thead>
-                </StyledTable>
-                <TableBodyWrapper
-                  ref={tableBodyWrapperRef}
-                  style={
-                    rowHeight
-                      ? ({
-                          "--asset-row-height": `${rowHeight}px`,
-                        } as React.CSSProperties)
-                      : undefined
-                  }
-                >
-                  <StyledTable theme={theme}>
-                    <TableBody>
-                      {paginatedAssets.map((asset) => (
-                        <TableRow
-                          key={asset.uuid}
-                          theme={theme}
-                          className="asset-row"
-                        >
-                          <TableCell className="font-medium text-slate-900">
-                            {asset.name}
-                          </TableCell>
-                          <TableCell className="text-slate-900">
-                            {asset.brand || t("common.none")}
-                          </TableCell>
-                          <TableCell>
-                            {asset.category_is_default === 1
-                              ? t("management.asset.category.defaultCategory")
-                              : asset.category_name || t("common.none")}
-                          </TableCell>
-                          <TableCell>
-                            ￥ {asset.price.toLocaleString("zh-CN")}
-                          </TableCell>
-                          <TableCell>{asset.purchase_date}</TableCell>
-                          <TableCell>
-                            {(asset.status || "holding") === "sold"
-                              ? t("management.asset.statusSold")
-                              : t("management.asset.statusHolding")}
-                          </TableCell>
-                          <TableCell>
-                            {asset.sale_price !== null &&
-                            asset.sale_price !== undefined
-                              ? `￥ ${asset.sale_price.toLocaleString("zh-CN")}`
-                              : "—"}
-                          </TableCell>
-                          <TableCell>{asset.sale_date || "—"}</TableCell>
-                          <TableCell>
-                            {(asset.status || "holding") === "sold"
-                              ? `￥ ${(
-                                  asset.realized_profit ??
-                                  (asset.sale_price ?? 0) -
-                                    (asset.price ?? 0) -
-                                    (asset.fees ?? 0)
-                                ).toLocaleString("zh-CN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}`
-                              : "—"}
-                          </TableCell>
-                          <ActionCell>
-                            <Tooltip text={t("common.edit")}>
-                              <EditButton
-                                theme={theme}
-                                onClick={() => handleEdit(asset)}
-                              >
-                                <IoPencil />
-                              </EditButton>
-                            </Tooltip>
-                            <Tooltip text={t("management.asset.markSold")}>
-                              <EditButton
-                                theme={theme}
-                                onClick={() => handleSell(asset)}
-                              >
-                                <IoCheckmarkCircle />
-                              </EditButton>
-                            </Tooltip>
-                            <Tooltip text={t("common.delete")}>
-                              <DeleteButton
-                                theme={theme}
-                                onClick={() => handleDelete(asset)}
-                              >
-                                <IoTrash />
-                              </DeleteButton>
-                            </Tooltip>
-                          </ActionCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </StyledTable>
-                </TableBodyWrapper>
-              </>
+              <StyledTable theme={theme} className="asset-dashboard__table">
+                <thead className="asset-dashboard__table-head">
+                  <tr id="asset-title" className="asset-dashboard__head-row">
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("name")}
+                      data-sort-active={sortConfig.key === "name"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--name"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.name")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("brand")}
+                      data-sort-active={sortConfig.key === "brand"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--brand"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.brand")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("category_name")}
+                      data-sort-active={sortConfig.key === "category_name"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--category"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.category.category")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("price")}
+                      data-sort-active={sortConfig.key === "price"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--price"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("common.price")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("purchase_date")}
+                      data-sort-active={sortConfig.key === "purchase_date"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--purchase-date"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("common.purchaseDate")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("status")}
+                      data-sort-active={sortConfig.key === "status"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--status"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.status")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("sale_price")}
+                      data-sort-active={sortConfig.key === "sale_price"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--sale-price"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.salePriceShort")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("sale_date")}
+                      data-sort-active={sortConfig.key === "sale_date"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--sale-date"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.saleDateShort")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      onClick={() => handleSort("realized_profit")}
+                      data-sort-active={sortConfig.key === "realized_profit"}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--realized-profit"
+                    >
+                      <Tooltip text={t("common.sortTooltip")}>
+                        <span>{t("management.asset.realizedProfit")}</span>
+                      </Tooltip>
+                    </TableHeaderCell>
+                    <TableHeaderCell
+                      theme={theme}
+                      className="asset-dashboard__head-cell asset-dashboard__head-cell--actions"
+                    >
+                      {t("common.actions")}
+                    </TableHeaderCell>
+                  </tr>
+                </thead>
+                <TableBody className="asset-dashboard__table-body">
+                  {paginatedAssets.map((asset) => (
+                    <TableRow
+                      key={asset.uuid}
+                      theme={theme}
+                      className="asset-row"
+                    >
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--name font-medium text-slate-900">
+                        {asset.name}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--brand text-slate-900">
+                        {asset.brand || t("common.none")}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--category">
+                        {asset.category_is_default === 1
+                          ? t("management.asset.category.defaultCategory")
+                          : asset.category_name || t("common.none")}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--price">
+                        ￥ {asset.price.toLocaleString("zh-CN")}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--purchase-date">
+                        {asset.purchase_date}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--status">
+                        {(asset.status || "holding") === "sold"
+                          ? t("management.asset.statusSold")
+                          : t("management.asset.statusHolding")}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--sale-price">
+                        {asset.sale_price !== null &&
+                        asset.sale_price !== undefined
+                          ? `￥ ${asset.sale_price.toLocaleString("zh-CN")}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--sale-date">
+                        {asset.sale_date || "—"}
+                      </TableCell>
+                      <TableCell className="asset-dashboard__cell asset-dashboard__cell--realized-profit">
+                        {(asset.status || "holding") === "sold"
+                          ? `￥ ${(
+                              asset.realized_profit ??
+                              (asset.sale_price ?? 0) -
+                                (asset.price ?? 0) -
+                                (asset.fees ?? 0)
+                            ).toLocaleString("zh-CN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : "—"}
+                      </TableCell>
+                      <ActionCell className="asset-dashboard__cell asset-dashboard__cell--actions">
+                        <ActionCellContent className="asset-dashboard__action-content">
+                          <Tooltip text={t("common.edit")}>
+                            <EditButton
+                              theme={theme}
+                              className="asset-dashboard__action-button asset-dashboard__action-button--edit"
+                              onClick={() => handleEdit(asset)}
+                            >
+                              <IoPencil />
+                            </EditButton>
+                          </Tooltip>
+                          <Tooltip text={t("management.asset.markSold")}>
+                            <EditButton
+                              theme={theme}
+                              className="asset-dashboard__action-button asset-dashboard__action-button--sold"
+                              onClick={() => handleSell(asset)}
+                            >
+                              <IoCheckmarkCircle />
+                            </EditButton>
+                          </Tooltip>
+                          <Tooltip text={t("common.delete")}>
+                            <DeleteButton
+                              theme={theme}
+                              className="asset-dashboard__action-button asset-dashboard__action-button--delete"
+                              onClick={() => handleDelete(asset)}
+                            >
+                              <IoTrash />
+                            </DeleteButton>
+                          </Tooltip>
+                        </ActionCellContent>
+                      </ActionCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </StyledTable>
             ) : (
               !isLoading && (
-                <NoResultsMessage theme={theme}>
+                <NoResultsMessage
+                  theme={theme}
+                  className="asset-dashboard__empty-state"
+                >
                   <p className="text-lg">
                     {t("management.asset.noAssetsFound")}
                   </p>
@@ -613,15 +648,16 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
             )}
           </TableWrapper>
           {sortedAndFilteredAssets.length > 0 && (
-            <PaginationContainer>
+            <PaginationContainer className="asset-dashboard__pagination">
               <PageButton
                 theme={theme}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
+                className="asset-dashboard__page-button"
               >
                 {t("common.prevPage")}
               </PageButton>
-              <PageInfo theme={theme}>
+              <PageInfo theme={theme} className="asset-dashboard__page-info">
                 {currentPage} / {totalPages}
               </PageInfo>
               <PageButton
@@ -630,6 +666,7 @@ const AssetDashboard: React.FC<AssetDashboardProps> = ({ theme }) => {
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
                 disabled={currentPage >= totalPages}
+                className="asset-dashboard__page-button"
               >
                 {t("common.nextPage")}
               </PageButton>

@@ -45,7 +45,7 @@ export const TableSection = styled.section<{ theme: Theme }>`
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 0.75rem;
   /* 纵向 flex 布局，并占据所有剩余空间 */
   display: flex;
   flex-direction: column;
@@ -112,28 +112,63 @@ export const TableWrapper = styled.div<{ theme: Theme }>`
   display: flex; /* 让内部元素（table 或提示信息）可以撑满 */
   flex-direction: column;
   min-height: 0; /* 防止内部内容撑开导致父级溢出 */
-  overflow: hidden;
+  overflow: auto;
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar-corner {
+    background-color: ${(props) => props.theme.colors.surface};
+  }
 `;
 
 export const StyledTable = styled.table`
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   font-size: 0.875rem;
   text-align: left;
   color: ${(props) => props.theme.colors.textSecondary};
   table-layout: fixed;
   border-collapse: collapse;
 
-  /* 当有数据时，表格高度自适应 */
-  tbody tr {
-    display: table-row;
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 12rem;
   }
-`;
-
-export const TableBodyWrapper = styled.div`
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 10rem;
+  }
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 10rem;
+  }
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 8rem;
+  }
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 10rem;
+  }
+  th:nth-child(6),
+  td:nth-child(6) {
+    width: 8rem;
+  }
+  th:nth-child(7),
+  td:nth-child(7) {
+    width: 9rem;
+  }
+  th:nth-child(8),
+  td:nth-child(8) {
+    width: 10rem;
+  }
+  th:nth-child(9),
+  td:nth-child(9) {
+    width: 10rem;
+  }
+  th:nth-child(10),
+  td:nth-child(10) {
+    width: 10rem;
+  }
 `;
 
 export const TableHeaderCell = styled.th<{ theme: Theme }>`
@@ -147,6 +182,14 @@ export const TableHeaderCell = styled.th<{ theme: Theme }>`
   user-select: none;
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
   text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  &:last-child {
+    right: 0;
+    z-index: 3;
+  }
 
   &:first-child {
     border-top-left-radius: 0.5rem;
@@ -173,7 +216,9 @@ export const TableHeaderCell = styled.th<{ theme: Theme }>`
 export const TableBody = styled.tbody``;
 
 export const TableRow = styled.tr<{ theme: Theme }>`
-  background-color: ${(props) => props.theme.colors.surface};
+  --asset-row-base: ${(props) => props.theme.colors.surface};
+  --asset-row-overlay: transparent;
+  background-color: var(--asset-row-base);
   border-bottom: 1px solid ${(props) => props.theme.colors.border};
   transition: background-color 0.2s ease;
   height: var(--asset-row-height, auto);
@@ -184,11 +229,11 @@ export const TableRow = styled.tr<{ theme: Theme }>`
 
   /* 添加斑马条纹效果 */
   &:nth-child(even) {
-    background-color: ${(props) => props.theme.colors.background};
+    --asset-row-base: ${(props) => props.theme.colors.background};
   }
 
   &:hover {
-    background-color: ${(props) => props.theme.colors.primaryFocus};
+    --asset-row-overlay: ${(props) => props.theme.colors.primaryFocus};
   }
 `;
 
@@ -198,6 +243,9 @@ export const TableCell = styled.td`
   color: ${(props) => props.theme.colors.textPrimary};
   text-align: center;
   height: var(--asset-row-height, auto);
+  vertical-align: middle;
+  background-color: var(--asset-row-base);
+  box-shadow: inset 0 0 0 9999px var(--asset-row-overlay, transparent);
 `;
 
 export const ActionButton = styled.button<{ theme: Theme }>`
@@ -242,10 +290,19 @@ export const DeleteButton = styled(TableActionButton)<{ theme: Theme }>`
 `;
 
 export const ActionCell = styled(TableCell)`
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background-color: var(--asset-row-base);
+  height: var(--asset-row-height, auto);
+`;
+
+export const ActionCellContent = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   justify-content: center;
+  gap: 0.5rem;
+  height: 100%;
 `;
 
 export const NoResultsMessage = styled.div<{ theme: Theme }>`
@@ -264,17 +321,18 @@ export const PaginationContainer = styled.div`
   justify-content: flex-end;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
   flex-shrink: 0;
 `;
 
 export const PageButton = styled.button<{ theme: Theme }>`
-  padding: 0.5rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 0.5rem;
   border: 1px solid ${(props) => props.theme.colors.border};
   background-color: ${(props) => props.theme.colors.surface};
   color: ${(props) => props.theme.colors.textPrimary};
-  min-width: 2.5rem;
+  min-width: 2rem;
+  font-size: 0.85rem;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
