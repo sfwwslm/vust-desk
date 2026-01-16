@@ -83,6 +83,6 @@
 
 ## ⚙️ 配置文件
 
-- **配置文件**: `~/.vust/config.json` - 存储如语言偏好等用户设置
-- **数据库文件**: `~/.vust/data/` - 存放应用的`SQLite`数据库文件
-- **图标缓存**: `~/.vust/icons/` - 存放自动抓取的网站图标缓存文件
+- **配置文件**: `~/.vust/vust-desk/config.json` - 存储如语言偏好等用户设置
+- **数据库文件**: `~/.vust/vust-desk/data/` - 存放应用的`SQLite`数据库文件
+- **图标缓存**: `~/.vust/vust-desk/icons/` - 存放自动抓取的网站图标缓存文件
