@@ -1,8 +1,13 @@
 name: Release Build
 
+run-name: "Version ${{ inputs.workflow_name }}"
+
 on:
   workflow_dispatch:
     inputs:
+      workflow_name:
+        description: "App version (e.g. 0.1.0-rc.1)"
+        required: true
       release_name:
         description: "The name of the release."
         required: false
