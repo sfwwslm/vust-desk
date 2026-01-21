@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { getVersion, getTauriVersion } from "@tauri-apps/api/app";
 import styled from "styled-components";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
 import Tooltip from "@/components/common/Tooltip/Tooltip";
-import { parseChangelogTree } from "@/utils";
 
 const AboutContainer = styled.div`
   width: 100%;
@@ -85,17 +84,6 @@ export default function About() {
     return version.replace(/^(>=|<=|>|<|\^|~)/, "");
   }
 
-  /**
-   * 从 __CHANGELOG_CONTENT__ 中提取版本号
-   */
-  const changelogVersion = useMemo(() => {
-    const sections = parseChangelogTree(__CHANGELOG_CONTENT__);
-    if (sections.length > 0) {
-      return `${sections[0].title}:`;
-    }
-    return "";
-  }, []);
-
   useEffect(() => {
     getVersion().then(setAppVersion);
     getTauriVersion().then(setTauriVersion);
@@ -107,7 +95,7 @@ export default function About() {
         <Paragraph>{t("help.about.tagline")}</Paragraph>
       </Content>
       <Version className="version" style={{ display: "grid" }}>
-        <Tooltip text={`${changelogVersion}${__GIT_HASH__}`}>
+        <Tooltip text={`Commit: ${__GIT_HASH__}`}>
           {/* 为了避免 Tooltip 影响 p 标签的 hover 效果，将 p 标签的样式移到 style 属性中 */}
           <p style={{ cursor: "default", color: "inherit" }}>
             Version: {appVersion}
