@@ -2,6 +2,9 @@
 
 **Vust Desk** 是一款使用 [Tauri](https://tauri.app/) 和 [React](https://react.dev/) 构建的现代化的桌面应用，提供流畅、美观且高效的用户体验
 
+![bg](https://raw.githubusercontent.com/sfwwslm/vust-desk/main/docs/panel.png)
+![bg](https://raw.githubusercontent.com/sfwwslm/vust-desk/main/docs/asset.png)
+
 ## ✨ 主要功能
 
 - **🌐 自定义导航面板**:
@@ -64,19 +67,19 @@
 2. **安装依赖**
 
     ```bash
-    pnpm i
+    pnpm install
     ```
 
 3. **启动开发环境**
 
     ```bash
-    pnpm td
+    pnpm tauri dev
     ```
 
 4. **构建应用**
 
     ```bash
-    pnpm tb
+    pnpm tauri build
     ```
 
     构建完成后，安装包会生成在 `src-tauri/target/release/bundle/` 目录下
