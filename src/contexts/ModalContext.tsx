@@ -7,7 +7,6 @@ import {
   useEffect,
 } from "react";
 import { useLocation } from "react-router-dom";
-import * as log from "@tauri-apps/plugin-log";
 import AlertModal, {
   AlertModalProps,
 } from "@/components/common/AlertModal/AlertModal";
@@ -19,10 +18,10 @@ interface ModalState {
   id: string;
   content: ReactNode;
   zIndex?: number;
-  key?: string; // ⭐ 为每个模态框状态添加一个可选的 key
+  key?: string; // 为每个模态框状态添加一个可选的 key
 }
 
-// ⭐ 定义 openModal 的类型
+// 定义 openModal 的类型
 interface ModalOptions {
   zIndex?: number;
   key?: string;
@@ -38,6 +37,7 @@ interface ModalContextType {
   openConfirm: (
     props: Omit<ConfirmationModalProps, "isOpen" | "onClose" | "onCancel"> & {
       onCancel?: () => void;
+      modalKey?: string;
     },
   ) => void;
 }
@@ -66,9 +66,17 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
 
       setModals((prevModals) => {
         // 在更新函数内部检查重复
-        if (key && prevModals.some((m) => m.key === key)) {
-          log.warn(`一个带有 key "${key}" 的模态框已经打开，已阻止重复打开。`);
-          return prevModals; // 返回旧状态，不执行任何操作
+        if (key) {
+          const existingModal = prevModals.find((m) => m.key === key);
+          if (existingModal) {
+            const close = () => closeModal(existingModal.id);
+            const content = renderContent(close);
+            return prevModals.map((modal) =>
+              modal.key === key
+                ? { ...modal, content, zIndex: zIndex ?? modal.zIndex }
+                : modal,
+            );
+          }
         }
 
         const modalId = `modal-${Date.now()}-${Math.random()}`;
@@ -101,26 +109,31 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
     (
       props: Omit<ConfirmationModalProps, "isOpen" | "onClose" | "onCancel"> & {
         onCancel?: () => void;
+        modalKey?: string;
       },
     ) => {
-      openModal((close) => {
-        const handleConfirm = () => {
-          props.onConfirm();
-          close();
-        };
-        const handleCancel = () => {
-          props.onCancel?.();
-          close();
-        };
-        return (
-          <ConfirmationModal
-            {...props}
-            isOpen={true}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-          />
-        );
-      });
+      const { modalKey, ...rest } = props;
+      openModal(
+        (close) => {
+          const handleConfirm = () => {
+            rest.onConfirm();
+            close();
+          };
+          const handleCancel = () => {
+            rest.onCancel?.();
+            close();
+          };
+          return (
+            <ConfirmationModal
+              {...rest}
+              isOpen={true}
+              onConfirm={handleConfirm}
+              onCancel={handleCancel}
+            />
+          );
+        },
+        modalKey ? { key: modalKey } : undefined,
+      );
     },
     [openModal],
   );
