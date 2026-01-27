@@ -1,4 +1,5 @@
 -- 用户登录与令牌缓存
+-- 说明：客户端本地登录状态与服务端令牌缓存；用于多服务端场景（server_instance_uuid）。
 CREATE TABLE IF NOT EXISTS users (
     uuid TEXT PRIMARY KEY NOT NULL,
     username TEXT NOT NULL,
@@ -18,6 +19,7 @@ BEGIN
 END;
 
 -- 同步元数据
+-- 说明：客户端与服务端同步进度；last_synced_rev 为毫秒级。
 CREATE TABLE IF NOT EXISTS sync_metadata (
     user_uuid TEXT PRIMARY KEY NOT NULL,
     last_synced_at TEXT,
@@ -27,6 +29,7 @@ CREATE TABLE IF NOT EXISTS sync_metadata (
 );
 
 -- 资产分类
+-- 说明：用户的资产分类（可软删除）；rev 为毫秒级变更版本，用于增量同步。
 CREATE TABLE IF NOT EXISTS asset_categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
@@ -34,11 +37,24 @@ CREATE TABLE IF NOT EXISTS asset_categories (
     name TEXT NOT NULL,
     is_default INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000),
+    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000
+        + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     FOREIGN KEY (user_uuid) REFERENCES users (uuid) ON DELETE CASCADE
 );
+
+-- 资产分类触发器
+-- 说明：更新时自动刷新 updated_at 与 rev（毫秒级），保证同步一致性。
+CREATE TRIGGER IF NOT EXISTS set_asset_categories_updated_at
+AFTER UPDATE ON asset_categories FOR EACH ROW
+BEGIN
+    UPDATE asset_categories
+    SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000
+               + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER))
+    WHERE id = OLD.id;
+END;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_user_category_name
 ON asset_categories (user_uuid, name)
@@ -48,16 +64,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_default_category_per_user
 ON asset_categories (user_uuid)
 WHERE is_default = 1;
 
-CREATE TRIGGER IF NOT EXISTS set_asset_categories_updated_at
-AFTER UPDATE ON asset_categories FOR EACH ROW
-BEGIN
-    UPDATE asset_categories
-    SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000)
-    WHERE id = OLD.id;
-END;
-
 -- 资产
+-- 说明：用户资产条目；关联分类；rev 为毫秒级变更版本。
 CREATE TABLE IF NOT EXISTS assets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
@@ -79,26 +87,31 @@ CREATE TABLE IF NOT EXISTS assets (
     notes TEXT,
     realized_profit REAL,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000),
+    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000
+        + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     FOREIGN KEY (user_uuid) REFERENCES users (uuid) ON DELETE CASCADE,
     FOREIGN KEY (category_uuid) REFERENCES asset_categories (uuid) ON DELETE RESTRICT
 );
 
-CREATE INDEX IF NOT EXISTS idx_assets_status ON assets (status);
-CREATE INDEX IF NOT EXISTS idx_assets_sale_date ON assets (sale_date);
-
+-- 资产触发器
+-- 说明：更新时自动刷新 updated_at 与 rev（毫秒级）。
 CREATE TRIGGER IF NOT EXISTS set_assets_updated_at
 AFTER UPDATE ON assets FOR EACH ROW
 BEGIN
     UPDATE assets
     SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000)
+        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000
+               + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER))
     WHERE id = OLD.id;
 END;
 
+CREATE INDEX IF NOT EXISTS idx_assets_status ON assets (status);
+CREATE INDEX IF NOT EXISTS idx_assets_sale_date ON assets (sale_date);
+
 -- 网站分组
+-- 说明：导航分组；rev 为毫秒级变更版本。
 CREATE TABLE IF NOT EXISTS website_groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
@@ -107,22 +120,27 @@ CREATE TABLE IF NOT EXISTS website_groups (
     description TEXT,
     sort_order INTEGER,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000),
+    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000
+        + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     FOREIGN KEY (user_uuid) REFERENCES users (uuid) ON DELETE CASCADE
 );
 
+-- 网站分组触发器
+-- 说明：更新时自动刷新 updated_at 与 rev（毫秒级）。
 CREATE TRIGGER IF NOT EXISTS set_website_groups_updated_at
 AFTER UPDATE ON website_groups FOR EACH ROW
 BEGIN
     UPDATE website_groups
     SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000)
+        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000
+               + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER))
     WHERE id = OLD.id;
 END;
 
 -- 网站
+-- 说明：导航网站条目；icon_source 记录图标来源；rev 为毫秒级变更版本。
 CREATE TABLE IF NOT EXISTS websites (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
@@ -138,23 +156,28 @@ CREATE TABLE IF NOT EXISTS websites (
     background_color TEXT,
     sort_order INTEGER,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000),
+    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000
+        + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     FOREIGN KEY (user_uuid) REFERENCES users (uuid) ON DELETE CASCADE,
     FOREIGN KEY (group_uuid) REFERENCES website_groups (uuid) ON DELETE CASCADE
 );
 
+-- 网站触发器
+-- 说明：更新时自动刷新 updated_at 与 rev（毫秒级）。
 CREATE TRIGGER IF NOT EXISTS set_websites_updated_at
 AFTER UPDATE ON websites FOR EACH ROW
 BEGIN
     UPDATE websites
     SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000)
+        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000
+               + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER))
     WHERE id = OLD.id;
 END;
 
 -- 搜索引擎
+-- 说明：用户自定义搜索引擎；rev 为毫秒级变更版本。
 CREATE TABLE IF NOT EXISTS search_engines (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
@@ -166,27 +189,32 @@ CREATE TABLE IF NOT EXISTS search_engines (
     is_default INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000),
+    rev INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER) * 1000
+        + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER)),
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     FOREIGN KEY (user_uuid) REFERENCES users (uuid) ON DELETE CASCADE,
     UNIQUE(user_uuid, name)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_default_search_engine_per_user
-ON search_engines (user_uuid)
-WHERE is_default = 1;
-
+-- 搜索引擎触发器
+-- 说明：更新时自动刷新 updated_at 与 rev（毫秒级）。
 CREATE TRIGGER IF NOT EXISTS set_search_engines_updated_at
 AFTER UPDATE ON search_engines FOR EACH ROW
 BEGIN
     UPDATE search_engines
     SET updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000)
+        rev = (CAST(strftime('%s','now') AS INTEGER) * 1000
+               + CAST((strftime('%f','now') - strftime('%S','now')) * 1000 AS INTEGER))
     WHERE id = OLD.id;
 END;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_default_search_engine_per_user
+ON search_engines (user_uuid)
+WHERE is_default = 1;
+
 -- 同步日志
+-- 说明：客户端同步过程记录（开始/结束/结果），便于排查异常。
 CREATE TABLE IF NOT EXISTS sync_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL UNIQUE,
