@@ -9,9 +9,11 @@ import {
 } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { info, error as logError } from "@tauri-apps/plugin-log";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { IoCloudDownloadOutline } from "react-icons/io5";
 import { useModal } from "@/contexts/ModalContext";
 import { useTranslation } from "react-i18next";
+import { GITHUB_LATEST_RELEASE_URL } from "@/constants/links";
 
 const UpdateContainer = styled.div<{ theme: Theme }>`
   width: 100%;
@@ -63,9 +65,20 @@ const CheckButton = styled.button<{ theme: Theme; disabled: boolean }>`
   }
 `;
 
+const InlineLink = styled.span<{ theme: Theme }>`
+  color: ${(props) => props.theme.colors.primary};
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: ${(props) => props.theme.colors.textPrimary};
+  }
+`;
+
 export default function CheckUpdatePage() {
   const { t } = useTranslation();
   const { openAlert, openConfirm, closeModal } = useModal();
+  const releaseUrl = GITHUB_LATEST_RELEASE_URL;
   const [isChecking, setIsChecking] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [unlisten, setUnlisten] = useState<(() => void) | null>(null);
@@ -120,6 +133,7 @@ export default function CheckUpdatePage() {
           onCancel: cancelDownload,
           hideConfirm: true,
           cancelText: t("help.checkUpdatePage.cancelDownload"),
+          modalKey: "download-progress",
         });
       };
 
@@ -208,12 +222,21 @@ export default function CheckUpdatePage() {
       closeModal();
       if (result) {
         openConfirm({
-          title: t("help.checkUpdatePage.newVersionFound", {
-            version: result.version,
-          }),
-          message: t("help.checkUpdatePage.updateDetails", {
-            body: result.body,
-          }),
+          title: (translate) =>
+            translate("help.checkUpdatePage.newVersionFound", {
+              version: result.version,
+            }),
+          message: (translate) => (
+            <>
+              {translate("help.checkUpdatePage.updateDetailsPrefix")}
+              <InlineLink onClick={async () => await openUrl(releaseUrl)}>
+                {translate("help.checkUpdatePage.updateDetailsLinkText")}
+              </InlineLink>
+              {translate("help.checkUpdatePage.updateDetailsSuffix")}
+            </>
+          ),
+          confirmText: (translate) =>
+            translate("help.checkUpdatePage.updateNow"),
           onConfirm: () => startDownload(result),
         });
       } else {

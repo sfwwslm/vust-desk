@@ -264,7 +264,10 @@
       "checkFailed": "Update Check Failed",
       "checkFailedMessage": "Failed to check for updates. Please try again later.",
       "newVersionFound": "New version found: {{version}}",
-      "updateDetails": "Update details:\n{{body}}\n\nDownload now?",
+      "updateDetailsPrefix": "Open the latest ",
+      "updateDetailsLinkText": "Release",
+      "updateDetailsSuffix": " page to view release notes.",
+      "updateNow": "Update",
       "confirmLater": "Later"
     }
   },

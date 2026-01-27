@@ -264,7 +264,10 @@
       "checkFailed": "检查更新失败",
       "checkFailedMessage": "检查更新失败，请稍后再试。",
       "newVersionFound": "发现新版本: {{version}}",
-      "updateDetails": "更新内容:\n{{body}}\n\n是否立即下载？",
+      "updateDetailsPrefix": "前往 ",
+      "updateDetailsLinkText": "Release",
+      "updateDetailsSuffix": " 页面查看发布信息。",
+      "updateNow": "更新",
       "confirmLater": "稍后"
     }
   },
