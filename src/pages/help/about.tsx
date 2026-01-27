@@ -5,6 +5,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
 import Tooltip from "@/components/common/Tooltip/Tooltip";
 import { IoBugOutline, IoLogoGithub } from "react-icons/io5";
+import { GITHUB_ISSUES_URL, GITHUB_REPO_URL } from "@/constants/links";
 
 const AboutContainer = styled.div`
   width: 100%;
@@ -95,8 +96,8 @@ export default function About() {
   const [appVersion, setAppVersion] = useState("...");
   const [tauriVersion, setTauriVersion] = useState("...");
   const { t } = useTranslation();
-  const githubUrl = "https://github.com/sfwwslm/vust-desk";
-  const issuesUrl = `${githubUrl}/issues`;
+  const githubUrl = GITHUB_REPO_URL;
+  const issuesUrl = GITHUB_ISSUES_URL;
 
   /**
    * 提取纯版本号（去除 npm 前缀、包名、范围符号）
