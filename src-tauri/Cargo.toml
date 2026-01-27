@@ -1,6 +1,6 @@
 [package]
 name = "vust-desk"
-version = "0.0.0"
+version = "0.1.1"
 description = "Vust Desk"
 authors = ["sfwwslm"]
 edition = "2024"
