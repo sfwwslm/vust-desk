@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
 import Tooltip from "@/components/common/Tooltip/Tooltip";
+import { IoBugOutline, IoLogoGithub } from "react-icons/io5";
 
 const AboutContainer = styled.div`
   width: 100%;
@@ -47,6 +48,39 @@ const Version = styled.div`
   }
 `;
 
+const BottomActions = styled.div`
+  position: absolute;
+  left: 3rem;
+  bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const IconButton = styled.button`
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid ${(props) => props.theme.colors.primary};
+  background: transparent;
+  color: ${(props) => props.theme.colors.textPrimary};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  &:hover {
+    background: ${(props) => props.theme.colors.primary};
+    color: ${(props) => props.theme.colors.textOnPrimary};
+  }
+`;
+
 const Paragraph = styled.p`
   font-size: 1rem;
   font-weight: bold;
@@ -61,6 +95,8 @@ export default function About() {
   const [appVersion, setAppVersion] = useState("...");
   const [tauriVersion, setTauriVersion] = useState("...");
   const { t } = useTranslation();
+  const githubUrl = "https://github.com/sfwwslm/vust-desk";
+  const issuesUrl = `${githubUrl}/issues`;
 
   /**
    * 提取纯版本号（去除 npm 前缀、包名、范围符号）
@@ -120,6 +156,18 @@ export default function About() {
           </p>
         </Tooltip>
       </Version>
+      <BottomActions>
+        <Tooltip text="GitHub">
+          <IconButton onClick={async () => await openUrl(githubUrl)}>
+            <IoLogoGithub />
+          </IconButton>
+        </Tooltip>
+        <Tooltip text="Issues">
+          <IconButton onClick={async () => await openUrl(issuesUrl)}>
+            <IoBugOutline />
+          </IconButton>
+        </Tooltip>
+      </BottomActions>
     </AboutContainer>
   );
 }
