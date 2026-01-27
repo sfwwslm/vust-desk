@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import {
   ConfirmationModalContainer,
   ConfirmationTitle,
@@ -10,15 +10,18 @@ import {
 import { IoAlertCircleOutline } from "react-icons/io5";
 import { Overlay } from "@/components/styled/StyledModal";
 import { useTranslation } from "react-i18next";
+import { TFunction } from "i18next";
+
+type ModalText = ReactNode | ((t: TFunction) => ReactNode);
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
-  title: string;
-  message: string;
+  title: ModalText;
+  message: ModalText;
   onConfirm: () => void;
   onCancel: () => void;
-  confirmText?: string;
-  cancelText?: string;
+  confirmText?: ModalText;
+  cancelText?: ModalText;
   hideConfirm?: boolean;
 }
 
@@ -35,8 +38,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   const { t } = useTranslation();
-  const finalConfirmText = confirmText || t("button.confirm");
-  const finalCancelText = cancelText || t("button.cancel");
+  const finalConfirmText = confirmText ?? t("button.confirm");
+  const finalCancelText = cancelText ?? t("button.cancel");
+  const resolvedConfirmText =
+    typeof finalConfirmText === "function"
+      ? finalConfirmText(t)
+      : finalConfirmText;
+  const resolvedCancelText =
+    typeof finalCancelText === "function"
+      ? finalCancelText(t)
+      : finalCancelText;
+  const resolvedTitle = typeof title === "function" ? title(t) : title;
+  const resolvedMessage = typeof message === "function" ? message(t) : message;
 
   return (
     <Overlay
@@ -58,16 +71,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             style={{ verticalAlign: "middle", marginRight: "8px" }}
             size={30}
           />
-          {title}
+          {resolvedTitle}
         </ConfirmationTitle>
-        <ConfirmationMessage>{message}</ConfirmationMessage>
+        <ConfirmationMessage>{resolvedMessage}</ConfirmationMessage>
         <ButtonGroup>
           {!hideConfirm && (
             <ConfirmButton onClick={onConfirm}>
-              {finalConfirmText}
+              {resolvedConfirmText}
             </ConfirmButton>
           )}
-          <CancelButton onClick={onCancel}>{finalCancelText}</CancelButton>
+          <CancelButton onClick={onCancel}>{resolvedCancelText}</CancelButton>
         </ButtonGroup>
       </ConfirmationModalContainer>
     </Overlay>

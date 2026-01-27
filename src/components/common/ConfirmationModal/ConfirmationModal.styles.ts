@@ -28,10 +28,20 @@ export const ButtonGroup = styled.div`
 `;
 
 export const ConfirmButton = styled(StyledButton).attrs({ variant: "danger" })`
+  padding: calc(${(props) => props.theme.spacing.unit} * 1.2)
+    calc(${(props) => props.theme.spacing.unit} * 2.5);
+  border-radius: ${(props) => props.theme.radii.base};
+  gap: calc(${(props) => props.theme.spacing.unit} / 2);
   min-width: 100px;
+  font-size: 0.95rem;
 `;
 
 export const CancelButton = styled(StyledButton).attrs({ variant: "ghost" })`
   background-color: ${(props) => props.theme.colors.border};
+  padding: calc(${(props) => props.theme.spacing.unit} * 1.2)
+    calc(${(props) => props.theme.spacing.unit} * 2.5);
+  border-radius: ${(props) => props.theme.radii.base};
+  gap: calc(${(props) => props.theme.spacing.unit} / 2);
   min-width: 100px;
+  font-size: 0.95rem;
 `;
