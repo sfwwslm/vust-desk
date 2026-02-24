@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use std::fs::{self, create_dir_all};
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
-use tauri_plugin_http::reqwest::{Client, header};
+use tauri_plugin_http::reqwest::{Client, StatusCode, header};
 use url::Url;
 
 /// 定义了要返回给前端的网站元数据结构
@@ -71,7 +71,14 @@ pub async fn fetch_website_metadata(
         .await
         .map_err(|e| format!("Request failed for {url}: {e}"))?;
 
-    if !response.status().is_success() {
+    let status = response.status();
+
+    if status.is_success() {
+        // OK
+    } else if status == StatusCode::FORBIDDEN && allow_403_for(&url) {
+        // 特定 URL 允许 403
+        warn!("Received 403 but allowed by policy {url}");
+    } else {
         return Err(format!("Request failed with status: {}", response.status()));
     }
 
@@ -101,6 +108,12 @@ pub async fn fetch_website_metadata(
         title,
         local_icon_path,
     })
+}
+
+fn allow_403_for(url: &str) -> bool {
+    let url = Url::parse(url).ok().unwrap();
+    let path = url.path();
+    matches!(path, "/cgi-bin/luci/" | "/cgi-bin/luci/admin/status")
 }
 
 /// 在HTML文档中查找最合适的`favicon URL`
