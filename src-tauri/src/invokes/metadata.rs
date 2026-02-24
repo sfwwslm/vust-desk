@@ -64,28 +64,10 @@ pub async fn fetch_website_metadata(
 ) -> Result<WebsiteMetadata, String> {
     info!("Fetching metadata for URL: {url}");
 
-    let response = http_client
-        .get(&url)
-        .timeout(std::time::Duration::from_secs(5))
-        .send()
-        .await
-        .map_err(|e| format!("Request failed for {url}: {e}"))?;
-
-    let status = response.status();
-
-    if status.is_success() {
-        // OK
-    } else if status == StatusCode::FORBIDDEN && allow_403_for(&url) {
-        // 特定 URL 允许 403
-        warn!("Received 403 but allowed by policy {url}");
-    } else {
-        return Err(format!("Request failed with status: {}", response.status()));
-    }
-
-    let body = response.text().await.map_err(|e| e.to_string())?;
+    let (final_url, body) = fetch_body_with_redirects(&http_client, &url).await?;
 
     // 调用同步函数来处理HTML解析，获取线程安全的数据。
-    let (title, favicon_url) = parse_metadata_from_body(&body, &url);
+    let (title, favicon_url) = parse_metadata_from_body(&body, &final_url);
 
     let local_icon_path = if let Some(fav_url) = favicon_url {
         info!("Found favicon URL: {fav_url}");
@@ -108,6 +90,126 @@ pub async fn fetch_website_metadata(
         title,
         local_icon_path,
     })
+}
+
+/// 请求URL并处理HTTP 3xx与HTML meta refresh重定向。
+async fn fetch_body_with_redirects(
+    http_client: &Client,
+    initial_url: &str,
+) -> Result<(String, String), String> {
+    let mut current_url = initial_url.to_string();
+    let mut redirect_count = 0usize;
+    let max_redirects = 5usize;
+
+    loop {
+        if redirect_count > max_redirects {
+            return Err(format!(
+                "Too many redirects (>{max_redirects}) for {initial_url}"
+            ));
+        }
+
+        let response = http_client
+            .get(&current_url)
+            .timeout(std::time::Duration::from_secs(5))
+            .send()
+            .await
+            .map_err(|e| format!("Request failed for {current_url}: {e}"))?;
+
+        let status = response.status();
+
+        if status.is_redirection() {
+            if let Some(location) = response.headers().get(header::LOCATION)
+                && let Ok(location) = location.to_str()
+                && let Some(next_url) = resolve_redirect_url(&current_url, location)
+            {
+                warn!(
+                    "HTTP redirect {} -> {} (status {})",
+                    current_url, next_url, status
+                );
+                current_url = next_url;
+                redirect_count += 1;
+                continue;
+            }
+
+            return Err(format!(
+                "Redirect status without valid Location header: {}",
+                status
+            ));
+        }
+
+        if status.is_success() {
+            // OK
+        } else if status == StatusCode::FORBIDDEN && allow_403_for(&current_url) {
+            // 特定 URL 允许 403
+            warn!("Received 403 but allowed by policy {current_url}");
+        } else {
+            return Err(format!("Request failed with status: {}", status));
+        }
+
+        let body = response.text().await.map_err(|e| e.to_string())?;
+
+        if let Some(meta_refresh_url) = find_meta_refresh_url(&body, &current_url) {
+            warn!(
+                "Meta refresh redirect {} -> {}",
+                current_url, meta_refresh_url
+            );
+            current_url = meta_refresh_url;
+            redirect_count += 1;
+            continue;
+        }
+
+        return Ok((current_url, body));
+    }
+}
+
+fn resolve_redirect_url(base_url: &str, location: &str) -> Option<String> {
+    let trimmed = location.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    if let Ok(url) = Url::parse(trimmed) {
+        return Some(url.to_string());
+    }
+    let base = Url::parse(base_url).ok()?;
+    base.join(trimmed).ok().map(|url| url.to_string())
+}
+
+/// 查找HTML中的<meta http-equiv="refresh" ...>重定向URL。
+fn find_meta_refresh_url(body: &str, base_url: &str) -> Option<String> {
+    let document = Html::parse_document(body);
+    let selector = Selector::parse("meta[http-equiv]").ok()?;
+
+    for element in document.select(&selector) {
+        let equiv = element.value().attr("http-equiv").unwrap_or("");
+        if !equiv.eq_ignore_ascii_case("refresh") {
+            continue;
+        }
+
+        let content = element.value().attr("content").unwrap_or("").trim();
+        if content.is_empty() {
+            continue;
+        }
+
+        if let Some(url_part) = extract_refresh_url(content)
+            && let Some(resolved) = resolve_redirect_url(base_url, &url_part)
+        {
+            return Some(resolved);
+        }
+    }
+
+    None
+}
+
+fn extract_refresh_url(content: &str) -> Option<String> {
+    let lower = content.to_lowercase();
+    let pos = lower.find("url=")?;
+    let after = &content[pos + 4..];
+    let trimmed = after.trim().trim_matches('"').trim_matches('\'');
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
 }
 
 fn allow_403_for(url: &str) -> bool {
