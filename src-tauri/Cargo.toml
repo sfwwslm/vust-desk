@@ -1,9 +1,9 @@
 [package]
 name = "vust-desk"
-version = "0.1.3"
-description = "Vust Desk"
+version.workspace = true
 edition.workspace = true
 authors.workspace = true
+description = "Vust Desk"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
