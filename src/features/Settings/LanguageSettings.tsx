@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsSection, Label, SelectWrapper } from "./Settings.styles";
 import { setLanguage } from "@/utils/config";

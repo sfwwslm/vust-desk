@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file src/services/apiClient.ts
  * @description 封装了一个健壮的、支持超时的 fetch API 客户端。
  *
@@ -51,7 +51,7 @@ interface RequestOptions extends RequestInit {
 async function refreshAccessToken(activeUser: any): Promise<string> {
   const refreshUrl = `${activeUser.serverAddress}/api/refresh`;
   log.info(`正在尝试为用户 ${activeUser.username} 刷新 Access Token...`);
-  
+
   const response = await fetch(refreshUrl, {
     method: "POST",
     headers: {
@@ -62,7 +62,9 @@ async function refreshAccessToken(activeUser: any): Promise<string> {
   });
 
   if (!response.ok) {
-    log.error(`用户 ${activeUser.username} 的令牌刷新请求失败: ${response.status}`);
+    log.error(
+      `用户 ${activeUser.username} 的令牌刷新请求失败: ${response.status}`,
+    );
     throw new ApiError("会话已过期，请重新登录。", 401);
   }
 

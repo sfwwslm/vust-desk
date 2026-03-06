@@ -1,4 +1,4 @@
-import { dbClient, getDb } from "@/services/db";
+﻿import { dbClient, getDb } from "@/services/db";
 import * as log from "@tauri-apps/plugin-log";
 import { ANONYMOUS_USER_UUID } from "@/services/user";
 import {

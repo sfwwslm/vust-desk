@@ -1,4 +1,4 @@
-export interface Claims {
+﻿export interface Claims {
   sub: string;
   username: string;
   exp: number;

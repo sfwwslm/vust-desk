@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file sync.ts
  * @brief 使用了精确类型定义的业务逻辑代码, 为了与数据库和后端代码的命名符合统一使用 snake_case 命名。
  * @author gwj

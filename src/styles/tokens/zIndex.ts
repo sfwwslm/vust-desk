@@ -1,7 +1,7 @@
-export const zIndices = {
+﻿export const zIndices = {
   sticky: 1, // 用于局部堆叠上下文，如粘性定位元素
   base: 10, // 基础层级
-  panelMenu: 100, // 导航页面右上角的菜单
+  LaunchpadMenu: 100, // 导航页面右上角的菜单
   dropdown: 1200, // 下拉菜单
   appHeader: 9999, // 全局顶栏
   modalBackdrop: 990, // 模态框背景遮罩

@@ -1,4 +1,4 @@
-import { dbClient } from "./db";
+﻿import { dbClient } from "./db";
 import { Asset, AssetCategory } from "@/features/Assets/types";
 import { ANONYMOUS_USER_UUID } from "@/services/user";
 import { ASSET_TABLE_NAME, ASSET_CATEGORIES_TABLE_NAME } from "@/constants";

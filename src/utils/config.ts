@@ -1,4 +1,4 @@
-import {
+﻿import {
   BaseDirectory,
   exists,
   readTextFile,
@@ -22,7 +22,7 @@ interface AppConfig {
   minimizeToTrayOnClose?: boolean; // 窗口关闭时最小化到系统托盘
   startMinimized?: boolean; // 启动时最小化
   openWithBrowser?: Browser; // 打开网站时使用的浏览器
-  panelEnvironment?: Environment; // 导航面板的环境
+  launchpadEnvironment?: Environment; // 导航面板的环境
   [key: string]: any;
 }
 
@@ -165,17 +165,17 @@ export async function setOpenWithBrowser(browser: Browser): Promise<void> {
  * 获取导航面板的环境设置。
  * @returns {Promise<Environment>} 返回环境名称，如果未设置则默认为 'lan'。
  */
-export async function getPanelEnvironment(): Promise<Environment> {
+export async function getlaunchpadEnvironment(): Promise<Environment> {
   const config = await readConfig();
-  return config.panelEnvironment || "lan";
+  return config.launchpadEnvironment || "lan";
 }
 
 /**
  * 设置导航面板的环境。
  * @param {Environment} env - 要保存的环境名称。
  */
-export async function setPanelEnvironment(env: Environment): Promise<void> {
+export async function setlaunchpadEnvironment(env: Environment): Promise<void> {
   const config = await readConfig();
-  config.panelEnvironment = env;
+  config.launchpadEnvironment = env;
   await writeConfig(config);
 }

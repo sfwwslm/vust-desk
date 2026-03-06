@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Overlay, Spinner, LoadingText } from "./LoadingOverlay.styles";
 
 interface LoadingOverlayProps {

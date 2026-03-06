@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file src/styles/tokens/borderWidths.ts
  * @description 定义了应用中所有基础的边框粗细值。
  * 这些是全局的、原始的令牌，不应被组件直接使用。

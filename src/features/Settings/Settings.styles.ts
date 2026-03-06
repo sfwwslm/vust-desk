@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 
 export const SettingsSection = styled.div`
   margin-bottom: 2.5rem;

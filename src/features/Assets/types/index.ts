@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @interface AssetCategory
  * @description 定义资产分类数据结构
  */

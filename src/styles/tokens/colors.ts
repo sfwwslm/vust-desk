@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file styles/tokens/colors.ts
  * @description
  * 定义了应用的基础色板 (Color Palette)。

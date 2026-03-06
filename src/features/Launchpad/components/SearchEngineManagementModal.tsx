@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { IoCheckmarkCircle, IoTrash, IoPencil } from "react-icons/io5";
 import { useModal } from "@/contexts/ModalContext";
-import * as panelDb from "@/services/panelDb";
-import { SearchEngine } from "@/features/Panel/types";
+import * as launchpadDb from "@/services/launchpadDb";
+import { SearchEngine } from "@/features/Launchpad/types";
 import Modal from "@/features/Assets/Modal/Modal";
 import { Input, FormGroup, Label } from "@/components/styled/StyledForm";
 import DynamicIcon from "@/components/common/DynamicIcon";
@@ -99,7 +99,7 @@ const SearchEngineManagementModal: React.FC<
     } catch (err) {
       openAlert({
         title: t("common.uploadFailed"),
-        message: `${t("panel.searchEngine.invalidIconFile")}: ${err}`,
+        message: `${t("launchpad.searchEngine.invalidIconFile")}: ${err}`,
       });
     } finally {
       setIsUploading(false);
@@ -111,7 +111,7 @@ const SearchEngineManagementModal: React.FC<
     if (!name.trim() || !urlTemplate.trim()) {
       openAlert({
         title: t("common.inputError"),
-        message: t("panel.searchEngine.emptyNameOrUrl"),
+        message: t("launchpad.searchEngine.emptyNameOrUrl"),
       });
       return;
     }
@@ -126,14 +126,14 @@ const SearchEngineManagementModal: React.FC<
 
     if (isDuplicate) {
       openAlert({
-        title: t("panel.searchEngine.duplicateName"),
-        message: t("panel.searchEngine.duplicateNameMessage"),
+        title: t("launchpad.searchEngine.duplicateName"),
+        message: t("launchpad.searchEngine.duplicateNameMessage"),
       });
       return;
     }
 
     try {
-      await panelDb.saveSearchEngine({
+      await launchpadDb.saveSearchEngine({
         ...(editingEngine ? { uuid: editingEngine.uuid } : {}),
         user_uuid: activeUser.uuid,
         name: name.trim(),
@@ -157,11 +157,11 @@ const SearchEngineManagementModal: React.FC<
   const handleDelete = (engine: SearchEngine) => {
     openConfirm({
       title: t("common.confirmDeletion"),
-      message: t("panel.searchEngine.confirmDeleteSearchEngine", {
+      message: t("launchpad.searchEngine.confirmDeleteSearchEngine", {
         name: engine.name,
       }),
       onConfirm: async () => {
-        await panelDb.deleteSearchEngine(engine.uuid);
+        await launchpadDb.deleteSearchEngine(engine.uuid);
         if (activeEngine.uuid === engine.uuid) {
           onEngineChange(engines[0]);
         }
@@ -176,8 +176,8 @@ const SearchEngineManagementModal: React.FC<
       onClose={onClose}
       title={
         editingEngine
-          ? t("panel.searchEngine.editSearchEngine")
-          : t("panel.searchEngine.manageSearchEngines")
+          ? t("launchpad.searchEngine.editSearchEngine")
+          : t("launchpad.searchEngine.manageSearchEngines")
       }
     >
       <ModalContent>
@@ -232,26 +232,28 @@ const SearchEngineManagementModal: React.FC<
           <LoadingOverlay isOpen={isUploading} text={t("common.uploading")} />
           <FormGroup>
             <Label htmlFor="engine-name">
-              {t("panel.searchEngine.engineName")}
+              {t("launchpad.searchEngine.engineName")}
             </Label>
             <Input
               id="engine-name"
-              placeholder={t("panel.searchEngine.exampleBing")}
+              placeholder={t("launchpad.searchEngine.exampleBing")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </FormGroup>
           <FormGroup>
             <Label htmlFor="url-template">
-              {t("panel.searchEngine.urlTemplate")}
+              {t("launchpad.searchEngine.urlTemplate")}
             </Label>
             <Input
               id="url-template"
-              placeholder={t("panel.searchEngine.exampleUrl")}
+              placeholder={t("launchpad.searchEngine.exampleUrl")}
               value={urlTemplate}
               onChange={(e) => setUrlTemplate(e.target.value)}
             />
-            <HintText>{t("panel.searchEngine.searchPlaceholderHint")}</HintText>
+            <HintText>
+              {t("launchpad.searchEngine.searchPlaceholderHint")}
+            </HintText>
           </FormGroup>
 
           <FormRow style={{ justifyContent: "flex-end" }}>
@@ -268,7 +270,7 @@ const SearchEngineManagementModal: React.FC<
             >
               {iconPath
                 ? t("common.reupload")
-                : t("panel.searchEngine.uploadIcon")}
+                : t("launchpad.searchEngine.uploadIcon")}
             </CompactButton>
             <CompactButton type="submit" variant="primary">
               {editingEngine ? t("button.save") : t("button.add")}

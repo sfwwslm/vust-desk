@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file src/services/errors.ts
  * @description 定义应用中用于网络请求的自定义错误类。
  *

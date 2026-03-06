@@ -1,4 +1,4 @@
-import { openUrl } from "@tauri-apps/plugin-opener";
+﻿import { openUrl } from "@tauri-apps/plugin-opener";
 import { getOpenWithBrowser } from "./config";
 import * as log from "@tauri-apps/plugin-log";
 

@@ -1,4 +1,4 @@
-import { AppThemeProvider } from "./ThemeContext";
+﻿import { AppThemeProvider } from "./ThemeContext";
 import { EnvironmentProvider } from "./EnvironmentContext";
 import { ModalProvider } from "./ModalContext";
 import { AuthProvider } from "./AuthContext";

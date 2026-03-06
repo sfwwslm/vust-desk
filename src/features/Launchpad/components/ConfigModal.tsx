@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 
-import { WebsiteGroup } from "@/features/Panel/types";
-import * as panelDb from "@/services/panelDb";
+import { WebsiteGroup } from "@/features/Launchpad/types";
+import * as launchpadDb from "@/services/launchpadDb";
 import Loading from "@/components/common/Loading";
-import GroupModal from "@/features/Panel/components/GroupModal";
+import GroupModal from "@/features/Launchpad/components/GroupModal";
 import {
   IoAddCircleOutline,
   IoPencil,
@@ -66,7 +66,7 @@ import {
   BookmarkImportContainer,
   ImportButton,
 } from "./ConfigModal.styles";
-import PanelPersonalizationSettings from "./PanelPersonalizationSettings";
+import LaunchpadPersonalizationSettings from "./LaunchpadPersonalizationSettings";
 
 /**
  * @interface BookmarkItem
@@ -179,7 +179,9 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
     if (!activeUser?.uuid) return; // 确保 activeUser 存在
     setIsLoading(true);
     // 解构返回的对象，只获取 groups 数组
-    const { groups: data } = await panelDb.getPanelData(activeUser.uuid);
+    const { groups: data } = await launchpadDb.getLaunchpadData(
+      activeUser.uuid,
+    );
     setGroups(data);
     setIsLoading(false);
   }, [activeUser]); // 依赖 activeUser
@@ -227,7 +229,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
    */
   const handleConfirmDelete = useCallback(
     async (groupUuid: string) => {
-      await panelDb.deleteGroup(groupUuid);
+      await launchpadDb.deleteGroup(groupUuid);
       await loadGroups();
       setDataChanged(true);
     },
@@ -242,9 +244,9 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
    */
   const handleDeleteGroup = (uuid: string, name: string) => {
     openConfirm({
-      title: t("panel.deleteGroupTitle"),
-      message: `${t("panel.deleteGroupMessagePrefix")}"${name}"${t(
-        "panel.deleteGroupMessageSuffix",
+      title: t("launchpad.deleteGroupTitle"),
+      message: `${t("launchpad.deleteGroupMessagePrefix")}"${name}"${t(
+        "Launchpad.deleteGroupMessageSuffix",
       )}`,
       onConfirm: () => handleConfirmDelete(uuid),
     });
@@ -281,7 +283,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
         dataToSave.user_uuid = activeUser.uuid;
       }
 
-      await panelDb.saveGroup(dataToSave);
+      await launchpadDb.saveGroup(dataToSave);
       await loadGroups(); // 重新加载以获取最新数据
       setIsGroupModalOpen(false);
       setDataChanged(true);
@@ -316,7 +318,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
         ) {
           setIsImporting(false);
           openAlert({
-            title: t("panel.importErrorTitle"),
+            title: t("launchpad.importErrorTitle"),
             message: "未在文件中找到有效的书签。",
           });
           return;
@@ -328,7 +330,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
 
         for (const importedGroup of importedGroups) {
           if (!existingGroupNames.has(importedGroup.name)) {
-            await panelDb.saveGroup({
+            await launchpadDb.saveGroup({
               name: importedGroup.name,
               user_uuid: activeUser.uuid,
             });
@@ -337,7 +339,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
         }
 
         // 重新获取所有分组数据（包含新创建的）以拿到 ID
-        const { groups: updatedGroups } = await panelDb.getPanelData(
+        const { groups: updatedGroups } = await launchpadDb.getLaunchpadData(
           activeUser.uuid,
         );
 
@@ -348,7 +350,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
           );
           if (targetGroup) {
             for (const item of importedGroup.items) {
-              await panelDb.saveItem({
+              await launchpadDb.saveItem({
                 group_uuid: targetGroup.uuid,
                 user_uuid: activeUser.uuid,
                 title: item.title,
@@ -365,8 +367,8 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
         await loadGroups(); // 刷新分组列表，以防用户切回分组管理
 
         openAlert({
-          title: t("panel.importSuccessTitle"),
-          message: t("panel.importSuccessMessage", {
+          title: t("launchpad.importSuccessTitle"),
+          message: t("launchpad.importSuccessMessage", {
             groupCount: newGroupCount,
             itemCount: newItemCount,
           }),
@@ -375,7 +377,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
     } catch (err) {
       setIsImporting(false);
       openAlert({
-        title: t("panel.importErrorTitle"),
+        title: t("launchpad.importErrorTitle"),
         message: String(err),
       });
     }
@@ -388,7 +390,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
         const oldIndex = items.findIndex((item) => item.uuid === active.id);
         const newIndex = items.findIndex((item) => item.uuid === over.id);
         const newOrderedGroups = arrayMove(items, oldIndex, newIndex);
-        panelDb.updateGroupsOrder(newOrderedGroups);
+        launchpadDb.updateGroupsOrder(newOrderedGroups);
         setDataChanged(true);
         return newOrderedGroups;
       });
@@ -408,7 +410,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
           <GroupManagementContainer className="group-management-container">
             <Toolbar>
               <AddButton onClick={handleAddGroup}>
-                <IoAddCircleOutline /> {t("panel.addGroup")}
+                <IoAddCircleOutline /> {t("launchpad.addGroup")}
               </AddButton>
             </Toolbar>
             <DndContext
@@ -439,14 +441,14 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
           <BookmarkImportContainer className="bookmark-import-container">
             <ImportButton onClick={handleImportBookmarks}>
               <IoCloudUploadOutline />
-              {t("panel.importButton")}
+              {t("launchpad.importButton")}
             </ImportButton>
           </BookmarkImportContainer>
         );
       case "browser_settings":
         return <BrowserSettings />;
       case "personalization":
-        return <PanelPersonalizationSettings />;
+        return <LaunchpadPersonalizationSettings />;
       default:
         return null;
     }
@@ -456,14 +458,14 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <SettingsOverlay
-          className="panel-config-overlay"
+          className="Launchpad-config-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleCloseOperation}
         >
           <SettingsModalContainer
-            className="panel-config-modal-container"
+            className="Launchpad-config-modal-container"
             initial={{ y: -50, opacity: 0, scale: 0.9 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -50, opacity: 0, scale: 0.8 }}
@@ -473,7 +475,7 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
             <ModalHeader>
               <Title>
                 <VscSettings />
-                {t("panel.configLong")}
+                {t("launchpad.configLong")}
               </Title>
               <CloseButton onClick={handleCloseOperation}>
                 <IoCloseSharp />
@@ -484,44 +486,44 @@ const ConfigModal: React.FC<NavigationConfigModalProps> = ({
               <Sidebar>
                 <MenuList>
                   <MenuItem
-                    className="panel-config-menu-item-group"
+                    className="Launchpad-config-menu-item-group"
                     $isActive={activeMenu === "group_management"}
                     onClick={() => setActiveMenu("group_management")}
                   >
                     <VscGroupByRefType />
-                    {t("panel.groupManagement")}
+                    {t("launchpad.groupManagement")}
                   </MenuItem>
                   <MenuItem
-                    className="panel-config-menu-item-import"
+                    className="Launchpad-config-menu-item-import"
                     $isActive={activeMenu === "bookmark_import"}
                     onClick={() => setActiveMenu("bookmark_import")}
                   >
                     <IoCloudUploadOutline />
-                    {t("panel.bookmarkImport")}
+                    {t("launchpad.bookmarkImport")}
                   </MenuItem>
                   {/* 浏览器设置菜单项 */}
                   <MenuItem
-                    className="panel-config-menu-item-browser"
+                    className="Launchpad-config-menu-item-browser"
                     $isActive={activeMenu === "browser_settings"}
                     onClick={() => setActiveMenu("browser_settings")}
                   >
                     <VscBrowser />
-                    {t("panel.browserSettings")}
+                    {t("launchpad.browserSettings")}
                   </MenuItem>
                   <MenuItem
-                    className="panel-config-menu-item-personalization"
+                    className="Launchpad-config-menu-item-personalization"
                     $isActive={activeMenu === "personalization"}
                     onClick={() => setActiveMenu("personalization")}
                   >
                     <VscPaintcan />
-                    {t("panel.personalization")}
+                    {t("launchpad.personalization")}
                   </MenuItem>
                 </MenuList>
               </Sidebar>
-              <Content className="panel-config-content">
+              <Content className="Launchpad-config-content">
                 <LoadingOverlay
                   isOpen={isImporting}
-                  text={t("panel.importing")}
+                  text={t("launchpad.importing")}
                 />
                 {renderContent()}
               </Content>

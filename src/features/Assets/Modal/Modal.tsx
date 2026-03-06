@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Overlay } from "@/components/styled/StyledModal";
 import { ModalProps } from "@/features/Assets/types";
 import { IoCloseSharp } from "react-icons/io5";

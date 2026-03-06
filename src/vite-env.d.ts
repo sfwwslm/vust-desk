@@ -1,4 +1,4 @@
-/// <reference types="vite/client" />
+﻿/// <reference types="vite/client" />
 
 /** 前端版本号, 在`vite.config.ts`中获取 */
 declare const __APP_VERSION__: string;

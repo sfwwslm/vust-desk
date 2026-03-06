@@ -1,12 +1,12 @@
-{
+﻿{
   "menu": {
-    "navigation": "Panel",
+    "navigation": "Launchpad",
     "app": {
       "toggleTheme": "Toggle Theme"
     },
     "account": {
       "entry": "Account",
-      "profile": "Profile Panel"
+      "profile": "Profile Launchpad"
     },
     "admin": {
       "title": "Admin",
@@ -91,13 +91,13 @@
     "prevPage": "Previous",
     "nextPage": "Next"
   },
-  "panel": {
-    "title": "Panel",
+  "Launchpad": {
+    "title": "Launchpad",
     "searchText": "Search sites or use a search engine...",
     "wan": "WAN",
     "lan": "LAN",
     "config": "Config",
-    "configLong": "Panel Config",
+    "configLong": "Launchpad Config",
     "groupManagement": "Group Management",
     "bookmarkImport": "Bookmark Import",
     "importButton": "Select Bookmark File (.html)",

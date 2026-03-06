@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useTheme } from "styled-components";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -8,7 +8,7 @@ import {
   IoCloudUploadOutline,
 } from "react-icons/io5";
 import { invoke } from "@tauri-apps/api/core";
-import { WebsiteItem, WebsiteGroup } from "@/features/Panel/types";
+import { WebsiteItem, WebsiteGroup } from "@/features/Launchpad/types";
 import DynamicIcon from "@/components/common/DynamicIcon";
 import { useModal } from "@/contexts/ModalContext";
 import * as log from "@tauri-apps/plugin-log";
@@ -69,8 +69,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
   const handleFetchMetadata = async (urlToFetch?: string) => {
     if (!urlToFetch || !isValidUrl(urlToFetch)) {
       openAlert({
-        title: t("panel.errorInvalidFormat"),
-        message: t("panel.errorInvalidDefaultUrl"),
+        title: t("launchpad.errorInvalidFormat"),
+        message: t("launchpad.errorInvalidDefaultUrl"),
         confirmText: t("button.confirm"),
       });
       return;
@@ -92,8 +92,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
     } catch (error) {
       log.error(`Failed to fetch metadata: ${error}`);
       openAlert({
-        title: t("panel.fetchMetaErrorTitle"),
-        message: t("panel.fetchMetaErrorMessage"),
+        title: t("launchpad.fetchMetaErrorTitle"),
+        message: t("launchpad.fetchMetaErrorMessage"),
         confirmText: t("button.confirm"),
       });
     } finally {
@@ -157,21 +157,21 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
   const groupOptions = groups.map((g) => ({ value: g.uuid, label: g.name }));
 
   return (
-    <Form className="panel-item-form" onSubmit={onSubmit} noValidate>
-      <LoadingOverlay isOpen={isFetching} text={t("panel.fetching")} />
+    <Form className="Launchpad-item-form" onSubmit={onSubmit} noValidate>
+      <LoadingOverlay isOpen={isFetching} text={t("launchpad.fetching")} />
 
       <FormGroup className="form-group-group_uuid">
-        <Label>{t("panel.group")}</Label>
+        <Label>{t("launchpad.group")}</Label>
         <CustomSelect
           value={item.group_uuid}
           onChange={(value) => onItemChange("group_uuid", value as string)}
           options={groupOptions}
-          placeholder={t("panel.selectGroup")}
+          placeholder={t("launchpad.selectGroup")}
         />
       </FormGroup>
 
       <FormGroup className="form-group-title">
-        <Label>{t("panel.websiteTitle")}</Label>
+        <Label>{t("launchpad.websiteTitle")}</Label>
         <Input
           type="text"
           value={item.title || ""}
@@ -183,7 +183,7 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
       <FormGroup className="form-group-url">
         <LabelContainer>
           <Label>URL</Label>
-          <Tooltip text={t("panel.fetchTooltip")}>
+          <Tooltip text={t("launchpad.fetchTooltip")}>
             <ActionButton
               className="fetch-metadata-button"
               type="button"
@@ -205,8 +205,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
 
       <FormGroup className="form-group-url_lan">
         <LabelContainer>
-          <Label>{t("panel.urlLanOptional")}</Label>
-          <Tooltip text={t("panel.fetchTooltip")}>
+          <Label>{t("launchpad.urlLanOptional")}</Label>
+          <Tooltip text={t("launchpad.fetchTooltip")}>
             <ActionButton
               className="fetch-metadata-button-lan"
               type="button"
@@ -229,11 +229,11 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
         <LabelContainer>
           <Label>
             {item.local_icon_path
-              ? t("panel.iconPreview")
+              ? t("launchpad.iconPreview")
               : t("common.iconName")}
           </Label>
           <IconActionButtons>
-            <Tooltip text={t("panel.tooltipUploadIcon")}>
+            <Tooltip text={t("launchpad.tooltipUploadIcon")}>
               <ActionButton
                 className="upload-icon-button"
                 type="button"
@@ -246,8 +246,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
             <Tooltip
               text={
                 item.local_icon_path
-                  ? t("panel.tooltipUseFallbackIcon")
-                  : t("panel.tooltipResetIcon")
+                  ? t("launchpad.tooltipUseFallbackIcon")
+                  : t("launchpad.tooltipResetIcon")
               }
             >
               <ActionButton
@@ -278,10 +278,10 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
               }}
             >
               {isIconInvalid
-                ? t("panel.iconSource.errorIconMissing")
+                ? t("launchpad.iconSource.errorIconMissing")
                 : item.icon_source === "user_uploaded"
-                  ? t("panel.iconSource.userUploaded")
-                  : t("panel.iconSource.autoFetched")}
+                  ? t("launchpad.iconSource.userUploaded")
+                  : t("launchpad.iconSource.autoFetched")}
             </span>
           </IconDisplayWrapper>
         ) : (
@@ -305,8 +305,8 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
 
       <FormGroup className="form-group-background_color">
         <LabelContainer>
-          <Label>{t("panel.backgroundColorOptional")}</Label>
-          <Tooltip text={t("panel.resetColor")}>
+          <Label>{t("launchpad.backgroundColorOptional")}</Label>
+          <Tooltip text={t("launchpad.resetColor")}>
             <ActionButton
               type="button"
               onClick={handleResetColor}
@@ -336,19 +336,19 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
         <IconText style={{ gridColumn: "1 / -1", marginTop: "-10px" }}>
           <p>
             <strong>
-              {t("panel.iconTitlePart1")}
+              {t("launchpad.iconTitlePart1")}
               <span
                 className="link-style"
                 onClick={() => openUrl("https://icon-sets.iconify.design/")}
               >
-                {t("panel.iconifyLinkText")}
+                {t("launchpad.iconifyLinkText")}
               </span>
-              {t("panel.iconTitlePart2")}
+              {t("launchpad.iconTitlePart2")}
             </strong>
           </p>
           <ul>
             <li>
-              {t("panel.iconSource.iconifyUsage")}
+              {t("launchpad.iconSource.iconifyUsage")}
               <code className="code-example">ion:globe-outline</code>
             </li>
           </ul>
@@ -360,7 +360,7 @@ const WebsiteItemForm: React.FC<WebsiteItemFormProps> = ({
         <Textarea
           value={item.description || ""}
           onChange={(e) => onItemChange("description", e.target.value)}
-          placeholder={t("panel.addDescription")}
+          placeholder={t("launchpad.addDescription")}
         />
       </FullWidthFormGroup>
 

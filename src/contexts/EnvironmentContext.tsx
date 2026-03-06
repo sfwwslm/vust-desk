@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useContext,
   ReactNode,
@@ -6,8 +6,8 @@ import {
   useEffect,
 } from "react";
 import {
-  getPanelEnvironment,
-  setPanelEnvironment,
+  getlaunchpadEnvironment,
+  setlaunchpadEnvironment,
   Environment,
 } from "@/utils/config";
 
@@ -26,7 +26,7 @@ export const EnvironmentProvider = ({ children }: { children: ReactNode }) => {
   // 在组件挂载时从配置文件异步加载初始状态
   useEffect(() => {
     const loadEnvironment = async () => {
-      const savedEnv = await getPanelEnvironment();
+      const savedEnv = await getlaunchpadEnvironment();
       setEnvironment(savedEnv);
     };
     loadEnvironment();
@@ -35,7 +35,7 @@ export const EnvironmentProvider = ({ children }: { children: ReactNode }) => {
   const toggleEnvironment = async () => {
     const newEnv = environment === "lan" ? "wan" : "lan";
     setEnvironment(newEnv); // 立即更新UI状态
-    await setPanelEnvironment(newEnv); // 将新状态写入配置文件
+    await setlaunchpadEnvironment(newEnv); // 将新状态写入配置文件
   };
 
   return (

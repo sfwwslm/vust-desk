@@ -1,4 +1,4 @@
-import { GlobalStyle } from "@/styles/GlobalStyles";
+﻿import { GlobalStyle } from "@/styles/GlobalStyles";
 import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Menus from "@/components/layout/Menus";

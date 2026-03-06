@@ -1,4 +1,4 @@
-export const HOME_VUST_DIR = ".vust";
+﻿export const HOME_VUST_DIR = ".vust";
 export const APP_CONFIG_DIR = "vust-desk";
 export const APP_CONFIG_FILE = "config.json";
 export const APP_DEV_CONFIG_FILE = "config.dev.json";

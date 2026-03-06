@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useState,
   useEffect,
   useMemo,
@@ -10,18 +10,18 @@ import {
   WebsiteGroup,
   WebsiteItem,
   SearchEngine,
-} from "@/features/Panel/types";
-import EditWebsiteItemModal from "@/features/Panel/components/EditWebsiteItemModal";
-import * as panelDb from "@/services/panelDb";
+} from "@/features/Launchpad/types";
+import EditWebsiteItemModal from "@/features/Launchpad/components/EditWebsiteItemModal";
+import * as launchpadDb from "@/services/launchpadDb";
 import Loading from "@/components/common/Loading";
-import WebsiteGroupSection from "@/features/Panel/components/WebsiteGroupSection";
-import ContextMenu from "@/features/Panel/components/ContextMenu";
+import WebsiteGroupSection from "@/features/Launchpad/components/WebsiteGroupSection";
+import ContextMenu from "@/features/Launchpad/components/ContextMenu";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { useAuth } from "@/contexts/AuthContext";
 import * as log from "@tauri-apps/plugin-log";
 import {
-  PanelIndexContainer,
-  PanelPageHeader,
+  LaunchpadIndexContainer,
+  LaunchpadPageHeader,
   HeaderSection,
   Title,
   SearchContainer,
@@ -29,11 +29,11 @@ import {
   SearchIconsContainer,
   ClearIcon,
   SearchButtonIcon,
-  PanelPageActionsContainer,
+  LaunchpadPageActionsContainer,
   SearchEngineIcon,
-} from "@/styles/panel/index.styles";
+} from "@/styles/launchpad/index.styles";
 import { useTranslation } from "react-i18next";
-import ConfigModal from "@/features/Panel/components/ConfigModal";
+import ConfigModal from "@/features/Launchpad/components/ConfigModal";
 import { useModal } from "@/contexts/ModalContext";
 import DynamicIcon from "@/components/common/DynamicIcon";
 import { StyledButton } from "@/components/styled/StyledButton";
@@ -47,13 +47,13 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { IconRefreshProvider } from "@/contexts/IconRefreshContext";
-import SearchEngineManagementModal from "@/features/Panel/components/SearchEngineManagementModal";
+import SearchEngineManagementModal from "@/features/Launchpad/components/SearchEngineManagementModal";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { openLink } from "@/utils/browser";
 import {
-  PanelSettingsProvider,
-  usePanelSettings,
-} from "@/contexts/PanelSettingsContext";
+  LaunchpadSettingsProvider,
+  useLaunchpadSettings,
+} from "@/contexts/LaunchpadSettingsContext";
 
 // --- 内置搜索引擎 ---
 const builtInSearchEngines: SearchEngine[] = [
@@ -75,12 +75,12 @@ const builtInSearchEngines: SearchEngine[] = [
   },
 ];
 
-const PanelPageContent: React.FC = () => {
+const LaunchpadPageContent: React.FC = () => {
   const { t } = useTranslation();
   const { environment, toggleEnvironment } = useEnvironment();
   // 从 useAuth 中获取 dataVersion，认领完成后刷新界面
   const { activeUser, dataVersion } = useAuth();
-  const { sideMargin } = usePanelSettings();
+  const { sideMargin } = useLaunchpadSettings();
   const [groups, setGroups] = useState<WebsiteGroup[]>([]);
   const [items, setItems] = useState<WebsiteItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,8 +128,8 @@ const PanelPageContent: React.FC = () => {
 
   const loadSearchEngines = useCallback(async () => {
     if (!activeUser?.uuid) return;
-    const customEngines = await panelDb.getSearchEngines(activeUser.uuid);
-    const dbDefaultEngine = await panelDb.getDefaultSearchEngine(
+    const customEngines = await launchpadDb.getSearchEngines(activeUser.uuid);
+    const dbDefaultEngine = await launchpadDb.getDefaultSearchEngine(
       activeUser.uuid,
     );
     const combined = [...builtInSearchEngines, ...customEngines];
@@ -151,7 +151,7 @@ const PanelPageContent: React.FC = () => {
     await Promise.all([
       (async () => {
         const { groups: fetchedGroups, items: fetchedItems } =
-          await panelDb.getPanelData(activeUser.uuid);
+          await launchpadDb.getLaunchpadData(activeUser.uuid);
         setGroups(fetchedGroups);
         setItems(fetchedItems);
       })(),
@@ -231,7 +231,7 @@ const PanelPageContent: React.FC = () => {
         );
         dataToSave.sort_order = itemsInGroup.length;
       }
-      await panelDb.saveItem(dataToSave);
+      await launchpadDb.saveItem(dataToSave);
       await loadData();
     },
     [loadData, items, activeUser, showAlert],
@@ -252,7 +252,7 @@ const PanelPageContent: React.FC = () => {
           if (scrollContainerRef.current) {
             scrollPosRef.current = scrollContainerRef.current.scrollTop;
           }
-          await panelDb.deleteItem(itemToDelete.uuid);
+          await launchpadDb.deleteItem(itemToDelete.uuid);
           await loadData();
         },
       });
@@ -280,7 +280,7 @@ const PanelPageContent: React.FC = () => {
 
         const newOrderedItems = arrayMove(currentItems, oldIndex, newIndex);
 
-        panelDb.updateItemsOrder(newOrderedItems);
+        launchpadDb.updateItemsOrder(newOrderedItems);
         return newOrderedItems;
       });
     }
@@ -290,9 +290,9 @@ const PanelPageContent: React.FC = () => {
     setActiveEngineUuid(engine.uuid);
     if (activeUser) {
       if (engine.is_deletable === 1) {
-        await panelDb.setActiveSearchEngine(engine.uuid, activeUser.uuid);
+        await launchpadDb.setActiveSearchEngine(engine.uuid, activeUser.uuid);
       } else {
-        await panelDb.clearDefaultSearchEngine(activeUser.uuid);
+        await launchpadDb.clearDefaultSearchEngine(activeUser.uuid);
       }
     }
   };
@@ -350,33 +350,35 @@ const PanelPageContent: React.FC = () => {
 
   return (
     <>
-      <PanelIndexContainer
-        className="panel-index-container"
+      <LaunchpadIndexContainer
+        className="Launchpad-index-container"
         style={
-          { "--panel-side-margin-percent": sideMargin } as React.CSSProperties
+          {
+            "--Launchpad-side-margin-percent": sideMargin,
+          } as React.CSSProperties
         }
       >
-        <PanelPageActionsContainer className="panel-page-actions-container">
+        <LaunchpadPageActionsContainer className="Launchpad-page-actions-container">
           <StyledButton variant="ghost" onClick={toggleEnvironment}>
             <DynamicIcon
               defaultIcon={
                 environment === "lan" ? "IoHomeOutline" : "IoPlanetOutline"
               }
             />
-            {environment === "lan" ? t("panel.lan") : t("panel.wan")}
+            {environment === "lan" ? t("launchpad.lan") : t("launchpad.wan")}
           </StyledButton>
           <StyledButton
             variant="ghost"
             onClick={() => setIsNavConfigModalOpen(true)}
           >
             <DynamicIcon defaultIcon={"IoSettingsOutline"} />
-            {t("panel.config")}
+            {t("launchpad.config")}
           </StyledButton>
-        </PanelPageActionsContainer>
+        </LaunchpadPageActionsContainer>
 
-        <PanelPageHeader className="panel-page-header">
+        <LaunchpadPageHeader className="Launchpad-page-header">
           <HeaderSection>
-            <Title>{t("panel.title")}</Title>
+            <Title>{t("launchpad.title")}</Title>
             <SearchContainer>
               <SearchEngineIcon onClick={() => setIsEngineModalOpen(true)}>
                 <DynamicIcon
@@ -385,8 +387,8 @@ const PanelPageContent: React.FC = () => {
                 />
               </SearchEngineIcon>
               <SearchInput
-                id="panel-search-input"
-                placeholder={t("panel.searchText")}
+                id="Launchpad-search-input"
+                placeholder={t("launchpad.searchText")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
@@ -397,7 +399,7 @@ const PanelPageContent: React.FC = () => {
               </SearchIconsContainer>
             </SearchContainer>
           </HeaderSection>
-        </PanelPageHeader>
+        </LaunchpadPageHeader>
 
         <DndContext
           sensors={sensors}
@@ -419,7 +421,7 @@ const PanelPageContent: React.FC = () => {
             />
           ))}
         </DndContext>
-      </PanelIndexContainer>
+      </LaunchpadIndexContainer>
 
       <ConfigModal
         isOpen={isNavConfigModalOpen}
@@ -459,14 +461,14 @@ const PanelPageContent: React.FC = () => {
   );
 };
 
-const PanelPage: React.FC = () => {
+const LaunchpadPage: React.FC = () => {
   return (
     <IconRefreshProvider>
-      <PanelSettingsProvider>
-        <PanelPageContent />
-      </PanelSettingsProvider>
+      <LaunchpadSettingsProvider>
+        <LaunchpadPageContent />
+      </LaunchpadSettingsProvider>
     </IconRefreshProvider>
   );
 };
 
-export default PanelPage;
+export default LaunchpadPage;

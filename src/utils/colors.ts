@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file src/utils/colors.ts
  * @description 颜色相关的公共辅助函数
  */

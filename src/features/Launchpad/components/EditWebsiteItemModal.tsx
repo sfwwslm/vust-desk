@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { WebsiteItem, WebsiteGroup } from "@/features/Panel/types";
+﻿import React, { useState, useEffect, useCallback } from "react";
+import { WebsiteItem, WebsiteGroup } from "@/features/Launchpad/types";
 import Modal from "@/features/Assets/Modal/Modal";
 import { useTranslation } from "react-i18next";
 import { useModal } from "@/contexts/ModalContext";
@@ -67,19 +67,19 @@ const EditWebsiteItemModal: React.FC<EditWebsiteItemModalProps> = ({
     itemToValidate: Partial<WebsiteItem>,
   ): string | null => {
     if (!itemToValidate.title?.trim()) {
-      return t("panel.errorTitleRequired");
+      return t("launchpad.errorTitleRequired");
     }
     if (!itemToValidate.url?.trim()) {
-      return t("panel.errorUrlRequired");
+      return t("launchpad.errorUrlRequired");
     }
     if (!isValidUrl(itemToValidate.url)) {
-      return t("panel.errorInvalidDefaultUrl");
+      return t("launchpad.errorInvalidDefaultUrl");
     }
     if (itemToValidate.url_lan && !isValidUrl(itemToValidate.url_lan)) {
-      return t("panel.errorInvalidIntranetUrl");
+      return t("launchpad.errorInvalidIntranetUrl");
     }
     if (!itemToValidate.group_uuid) {
-      return t("panel.selectGroup");
+      return t("launchpad.selectGroup");
     }
     return null;
   };
@@ -89,7 +89,7 @@ const EditWebsiteItemModal: React.FC<EditWebsiteItemModalProps> = ({
     const errorMessage = validateItem(editedItem);
     if (errorMessage) {
       openAlert({
-        title: t("panel.errorInvalidFormat"),
+        title: t("launchpad.errorInvalidFormat"),
         message: errorMessage,
         confirmText: t("button.confirm"),
       });
@@ -106,7 +106,7 @@ const EditWebsiteItemModal: React.FC<EditWebsiteItemModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={item ? t("panel.editItem") : t("panel.addItem")}
+      title={item ? t("launchpad.editItem") : t("launchpad.addItem")}
     >
       <WebsiteItemForm
         item={editedItem}

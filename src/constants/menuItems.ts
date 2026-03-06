@@ -1,4 +1,4 @@
-import { TFunction } from "i18next";
+﻿import { TFunction } from "i18next";
 
 /**
  * 定义菜单项的类型

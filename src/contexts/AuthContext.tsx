@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useCallback,
   useContext,
@@ -133,7 +133,7 @@ interface AuthContextType {
    * @property {number} dataVersion
    * @description 一个数字版本号，充当全局“刷新信号”。
    * - 当一个操作（如“数据认领”）成功完成并显著改变了数据库的数据归属后，这个版本号会递增。
-   * - 监听此值的组件（如 AssetDashboard, PanelPage）会在其变化时自动重新加载数据，确保UI与数据库同步。
+   * - 监听此值的组件（如 AssetDashboard, LaunchpadPage）会在其变化时自动重新加载数据，确保UI与数据库同步。
    */
   dataVersion: number;
 

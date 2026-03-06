@@ -1,4 +1,4 @@
-import { BaseDirectory, exists, mkdir } from "@tauri-apps/plugin-fs";
+﻿import { BaseDirectory, exists, mkdir } from "@tauri-apps/plugin-fs";
 import { homeDir, join } from "@tauri-apps/api/path";
 import { info, debug } from "@tauri-apps/plugin-log";
 import { HOME_VUST_DIR, APP_CONFIG_DIR, APP_DATA_DIR } from "@/constants";

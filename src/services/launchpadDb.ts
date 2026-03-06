@@ -1,10 +1,10 @@
-import { dbClient } from "./db";
+﻿import { dbClient } from "./db";
 import {
   WebsiteGroup,
   WebsiteItem,
   SearchEngine,
-} from "@/features/Panel/types";
-import { defaultWebsiteData } from "@/features/Panel/constants/panelItems";
+} from "@/features/Launchpad/types";
+import { defaultWebsiteData } from "@/features/Launchpad/constants/launchpadItems";
 import * as log from "@tauri-apps/plugin-log";
 import { ANONYMOUS_USER_UUID, getUsernameByUuid } from "./user";
 import {
@@ -47,7 +47,7 @@ async function ensureDefaultDataIsInitialized(): Promise<void> {
  * @param userUuid - 要查询的用户的 UUID。
  * @returns {Promise<{ groups: WebsiteGroup[]; items: WebsiteItem[] }>} 返回包含分组和网站项独立数组的对象
  */
-export async function getPanelData(
+export async function getLaunchpadData(
   userUuid: string,
 ): Promise<{ groups: WebsiteGroup[]; items: WebsiteItem[] }> {
   if (userUuid === ANONYMOUS_USER_UUID) {

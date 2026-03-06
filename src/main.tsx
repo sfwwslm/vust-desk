@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+﻿import React, { Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ensureAppRootDirExists } from "@/utils/fs";
 import Loading from "./components/common/Loading";

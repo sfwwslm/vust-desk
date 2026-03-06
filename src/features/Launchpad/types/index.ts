@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @interface WebsiteItem
  * @description 代表一个独立的网站链接项。
  */

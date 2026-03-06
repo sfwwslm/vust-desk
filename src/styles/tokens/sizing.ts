@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file styles/tokens/sizing.ts
  * @description
  * 定义了应用中所有与尺寸相关的基础值。

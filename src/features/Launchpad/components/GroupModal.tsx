@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { WebsiteGroup } from "@/features/Panel/types";
+import { WebsiteGroup } from "@/features/Launchpad/types";
 import Modal from "@/features/Assets/Modal/Modal";
 import { useTranslation } from "react-i18next";
 import { useModal } from "@/contexts/ModalContext";
 
-const PanelGroupForm = styled.form`
+const LaunchpadGroupForm = styled.form`
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -83,7 +83,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!name.trim()) {
       openAlert({
         title: t("common.inputError"),
-        message: t("panel.groupNameRequired"),
+        message: t("launchpad.groupNameRequired"),
         confirmText: t("button.confirm"),
       });
       return;
@@ -101,38 +101,40 @@ const GroupModal: React.FC<GroupModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={group ? `${t("panel.editGroup")}` : `${t("panel.addNewGroup")}`}
+      title={
+        group ? `${t("launchpad.editGroup")}` : `${t("launchpad.addNewGroup")}`
+      }
     >
-      <PanelGroupForm
-        className="panel-group-form"
+      <LaunchpadGroupForm
+        className="Launchpad-group-form"
         onSubmit={handleSubmit}
         noValidate
       >
         <FormGroup>
-          <Label htmlFor="group-name">{t("panel.groupName")}</Label>
+          <Label htmlFor="group-name">{t("launchpad.groupName")}</Label>
           <Input
             id="group-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder={t("panel.groupPlaceholder")}
+            placeholder={t("launchpad.groupPlaceholder")}
           />
         </FormGroup>
         <FormGroup>
           <Label htmlFor="group-description">
-            {t("panel.groupDescription")}
+            {t("launchpad.groupDescription")}
           </Label>
           <Input
             id="group-description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("panel.groupDescriptionPlaceholder")}
+            placeholder={t("launchpad.groupDescriptionPlaceholder")}
           />
         </FormGroup>
-        <Button type="submit">{t("panel.addGroupSave")}</Button>
-      </PanelGroupForm>
+        <Button type="submit">{t("launchpad.addGroupSave")}</Button>
+      </LaunchpadGroupForm>
     </Modal>
   );
 };

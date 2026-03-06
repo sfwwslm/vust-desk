@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -45,7 +45,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
   return (
     <MenuContainer
-      className="panel-card-edit-menu"
+      className="Launchpad-card-edit-menu"
       style={{ top: y, left: x }}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}

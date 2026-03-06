@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import styled from "styled-components";
 import { MdWbSunny, MdOutlineWbSunny } from "react-icons/md";

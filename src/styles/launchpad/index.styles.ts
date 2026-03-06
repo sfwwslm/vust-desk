@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+﻿import styled, { css } from "styled-components";
 import { motion } from "framer-motion";
 import {
   IoCloseCircleOutline,
@@ -15,7 +15,7 @@ export const Io5Icons = {
   IoLogoGoogle,
 };
 
-export const PanelPageHeader = styled.div`
+export const LaunchpadPageHeader = styled.div`
   width: 100%;
   max-width: 960px; /* 定义内容区域的最大宽度 */
   display: flex;
@@ -46,17 +46,17 @@ export const SearchContainer = styled.div`
 `;
 
 /** 页面右上角操作按钮的容器 */
-export const PanelPageActionsContainer = styled.div`
+export const LaunchpadPageActionsContainer = styled.div`
   position: fixed;
   top: 3.5rem;
   right: 2rem;
-  z-index: ${(props) => props.theme.zIndices.panelMenu};
+  z-index: ${(props) => props.theme.zIndices.LaunchpadMenu};
   display: flex;
   align-items: center;
   gap: 0.8rem; /* 按钮之间的间距 */
 `;
 
-export const PanelIndexContainer = styled.div`
+export const LaunchpadIndexContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -138,9 +138,9 @@ export const SearchButtonIcon = styled(Io5Icons.IoSearchOutline)`
   }
 `;
 
-export const PanelGroupSectionStyles = styled(motion.div)`
+export const LaunchpadGroupSectionStyles = styled(motion.div)`
   width: 100%;
-  max-width: calc(100% - (var(--panel-side-margin-percent, 5) * 2%));
+  max-width: calc(100% - (var(--Launchpad-side-margin-percent, 5) * 2%));
   margin: 0 auto 1rem auto;
 `;
 
@@ -207,7 +207,7 @@ export const ActionIcon = styled.div`
   }
 `;
 
-export const PanelGrid = styled(motion.div)<{ isDraggingOver?: boolean }>`
+export const LaunchpadGrid = styled(motion.div)<{ isDraggingOver?: boolean }>`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 1.5rem;
@@ -234,7 +234,7 @@ export const ItemActions = styled.div`
 `;
 
 /** 站点卡片的内容容器 */
-export const PanelCardContent = styled.div`
+export const LaunchpadCardContent = styled.div`
   width: 100%;
   height: 100%;
   padding: 1rem;
@@ -248,7 +248,7 @@ export const PanelCardContent = styled.div`
 `;
 
 /** 站点卡片 */
-export const PanelCard = styled(motion.div)<{
+export const LaunchpadCard = styled(motion.div)<{
   background_color?: string;
   isDragging?: boolean;
   isSorting?: boolean;
@@ -290,8 +290,8 @@ export const PanelCard = styled(motion.div)<{
   &:hover {
     border-color: ${(props) => props.theme.colors.primary};
 
-    // 但 transform 只应用在内部的 PanelCardContent 上
-    ${PanelCardContent} {
+    // 但 transform 只应用在内部的 LaunchpadCardContent 上
+    ${LaunchpadCardContent} {
       transform: ${(props) =>
         props.isSorting ? "translateY(0)" : "translateY(-1px)"};
     }
@@ -307,7 +307,7 @@ export const PanelCard = styled(motion.div)<{
   }
 `;
 
-export const PanelIcon = styled.div`
+export const LaunchpadIcon = styled.div`
   font-size: 2.5rem;
   color: ${(props) => props.theme.colors.primary};
   margin-bottom: 1rem;
@@ -324,7 +324,7 @@ export const PanelIcon = styled.div`
   }
 `;
 
-export const PanelName = styled.p`
+export const LaunchpadName = styled.p`
   font-size: 0.9rem;
   font-weight: bold;
   text-align: center;

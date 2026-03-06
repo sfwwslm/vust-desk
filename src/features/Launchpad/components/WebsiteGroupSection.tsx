@@ -1,19 +1,19 @@
-import React, { useState } from "react";
-import { WebsiteGroup, WebsiteItem } from "@/features/Panel/types";
+﻿import React, { useState } from "react";
+import { WebsiteGroup, WebsiteItem } from "@/features/Launchpad/types";
 import { AnimatePresence } from "framer-motion";
 import DynamicIcon from "@/components/common/DynamicIcon";
 import {
-  PanelGroupSectionStyles,
+  LaunchpadGroupSectionStyles,
   SectionHeader,
   SectionTitle,
   ActionIcon,
   HeaderActions,
-  PanelGrid,
-  PanelCard,
-  PanelCardContent,
-  PanelIcon,
-  PanelName,
-} from "@/styles/panel/index.styles";
+  LaunchpadGrid,
+  LaunchpadCard,
+  LaunchpadCardContent,
+  LaunchpadIcon,
+  LaunchpadName,
+} from "@/styles/launchpad/index.styles";
 import {
   IoAddCircleOutline,
   IoSwapVertical,
@@ -30,7 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useTheme } from "styled-components";
 
 /** 可排序的网站卡片组件 */
-const SortablePanelCard: React.FC<{
+const SortableLaunchpadCard: React.FC<{
   item: WebsiteItem;
   isSorting: boolean;
   onCardClick: (item: WebsiteItem) => void;
@@ -68,10 +68,10 @@ const SortablePanelCard: React.FC<{
   };
 
   return (
-    <PanelCard
+    <LaunchpadCard
       ref={setNodeRef}
       style={style}
-      className="panel-card-wrapper"
+      className="Launchpad-card-wrapper"
       background_color={item.background_color}
       onClick={handleCardClick}
       onContextMenu={handleContextMenu}
@@ -80,17 +80,17 @@ const SortablePanelCard: React.FC<{
       {...(isSorting ? listeners : {})}
       {...attributes}
     >
-      <PanelCardContent className="panel-card-content">
-        <PanelIcon className="panel-icon">
+      <LaunchpadCardContent className="Launchpad-card-content">
+        <LaunchpadIcon className="Launchpad-icon">
           <DynamicIcon
             defaultIcon={item.default_icon}
             localIconPath={item.local_icon_path}
             imgStyle={{ borderRadius: theme.radii.base }}
           />
-        </PanelIcon>
-        <PanelName className="panel-name">{item.title}</PanelName>
-      </PanelCardContent>
-    </PanelCard>
+        </LaunchpadIcon>
+        <LaunchpadName className="Launchpad-name">{item.title}</LaunchpadName>
+      </LaunchpadCardContent>
+    </LaunchpadCard>
   );
 };
 
@@ -113,15 +113,17 @@ const WebsiteGroupSection: React.FC<WebsiteGroupSectionProps> = ({
   const [isSorting, setIsSorting] = useState(false);
 
   return (
-    <PanelGroupSectionStyles className="panel-group-section">
+    <LaunchpadGroupSectionStyles className="Launchpad-group-section">
       <SectionHeader
-        className={`panel-group-section-header ${
+        className={`Launchpad-group-section-header ${
           isSorting ? "is-sorting" : ""
         }`}
       >
         <SectionTitle>{group.name}</SectionTitle>
         <HeaderActions>
-          <Tooltip text={isSorting ? t("panel.sortDone") : t("panel.sort")}>
+          <Tooltip
+            text={isSorting ? t("launchpad.sortDone") : t("launchpad.sort")}
+          >
             <ActionIcon
               onClick={() => setIsSorting(!isSorting)}
               className="sort-items-action-icon"
@@ -129,7 +131,7 @@ const WebsiteGroupSection: React.FC<WebsiteGroupSectionProps> = ({
               {isSorting ? <IoCheckmarkDoneSharp /> : <IoSwapVertical />}
             </ActionIcon>
           </Tooltip>
-          <Tooltip text={t("panel.addItem")}>
+          <Tooltip text={t("launchpad.addItem")}>
             <ActionIcon
               onClick={() => onAddItem(group.uuid)}
               className="add-item-action-icon"
@@ -144,10 +146,10 @@ const WebsiteGroupSection: React.FC<WebsiteGroupSectionProps> = ({
         strategy={rectSortingStrategy}
         disabled={!isSorting}
       >
-        <PanelGrid className="panel-grid">
+        <LaunchpadGrid className="Launchpad-grid">
           <AnimatePresence>
             {items.map((item) => (
-              <SortablePanelCard
+              <SortableLaunchpadCard
                 key={item.uuid}
                 item={item}
                 isSorting={isSorting}
@@ -156,9 +158,9 @@ const WebsiteGroupSection: React.FC<WebsiteGroupSectionProps> = ({
               />
             ))}
           </AnimatePresence>
-        </PanelGrid>
+        </LaunchpadGrid>
       </SortableContext>
-    </PanelGroupSectionStyles>
+    </LaunchpadGroupSectionStyles>
   );
 };
 

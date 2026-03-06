@@ -1,4 +1,4 @@
-import { join } from "@tauri-apps/api/path";
+﻿import { join } from "@tauri-apps/api/path";
 import { invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
 import { getIconsDir } from "@/utils/fs";

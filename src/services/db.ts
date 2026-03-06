@@ -1,4 +1,4 @@
-import Database, { QueryResult } from "@tauri-apps/plugin-sql";
+﻿import Database, { QueryResult } from "@tauri-apps/plugin-sql";
 import * as log from "@tauri-apps/plugin-log";
 import { join } from "@tauri-apps/api/path";
 import { dbDir } from "@/utils/fs";

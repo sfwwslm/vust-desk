@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useTranslation } from "react-i18next";
-import { usePanelSettings } from "@/contexts/PanelSettingsContext";
+import { useLaunchpadSettings } from "@/contexts/LaunchpadSettingsContext";
 
 const SettingsContainer = styled.div`
   padding: 1rem;
@@ -41,10 +41,10 @@ const SliderValue = styled.span`
   color: ${(props) => props.theme.colors.primary};
 `;
 
-const PanelPersonalizationSettings: React.FC = () => {
+const LaunchpadPersonalizationSettings: React.FC = () => {
   const { t } = useTranslation();
   const { sideMargin: persistedMargin, setSideMargin: setPersistedMargin } =
-    usePanelSettings();
+    useLaunchpadSettings();
 
   const [liveMargin, setLiveMargin] = useState(persistedMargin);
 
@@ -52,7 +52,7 @@ const PanelPersonalizationSettings: React.FC = () => {
   useEffect(() => {
     setLiveMargin(persistedMargin);
     document.documentElement.style.setProperty(
-      "--panel-side-margin-percent",
+      "--Launchpad-side-margin-percent",
       `${persistedMargin}`,
     );
   }, [persistedMargin]);
@@ -62,7 +62,7 @@ const PanelPersonalizationSettings: React.FC = () => {
     const newValue = Number(e.target.value);
     setLiveMargin(newValue);
     document.documentElement.style.setProperty(
-      "--panel-side-margin-percent",
+      "--Launchpad-side-margin-percent",
       `${newValue}`,
     );
   };
@@ -75,9 +75,9 @@ const PanelPersonalizationSettings: React.FC = () => {
   return (
     <SettingsContainer>
       <SettingsArea>
-        <AreaTitle>{t("panel.settings.contentArea")}</AreaTitle>
+        <AreaTitle>{t("launchpad.settings.contentArea")}</AreaTitle>
         <SettingRow>
-          <SettingLabel>{t("panel.settings.sideMargin")}</SettingLabel>
+          <SettingLabel>{t("launchpad.settings.sideMargin")}</SettingLabel>
           <SliderInput
             type="range"
             min="0"
@@ -94,4 +94,4 @@ const PanelPersonalizationSettings: React.FC = () => {
   );
 };
 
-export default PanelPersonalizationSettings;
+export default LaunchpadPersonalizationSettings;

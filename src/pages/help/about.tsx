@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { getVersion, getTauriVersion } from "@tauri-apps/api/app";
 import styled from "styled-components";
 import { openUrl } from "@tauri-apps/plugin-opener";

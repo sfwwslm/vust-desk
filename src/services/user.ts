@@ -1,4 +1,4 @@
-import type Database from "@tauri-apps/plugin-sql";
+﻿import type Database from "@tauri-apps/plugin-sql";
 import { join } from "@tauri-apps/api/path";
 import { readDir, remove } from "@tauri-apps/plugin-fs";
 import * as log from "@tauri-apps/plugin-log";

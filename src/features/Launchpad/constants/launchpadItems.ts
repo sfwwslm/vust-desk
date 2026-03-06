@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @interface DefaultWebsiteItem
  * @description 代表一个独立的网站链接项。内置默认数据专用类型
  */
@@ -49,7 +49,7 @@ export interface DefaultWebsiteGroup {
   items: DefaultWebsiteItem[];
 }
 
-// 在实际创建默认数据时，panelDb.ts 中的 `insertDefaultData` 会生成全新的、真实的 UUID。
+// 在实际创建默认数据时，launchpadDb.ts 中的 `insertDefaultData` 会生成全新的、真实的 UUID。
 export const defaultWebsiteData: DefaultWebsiteGroup[] = [
   {
     name: "APP",
