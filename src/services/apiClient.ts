@@ -14,6 +14,7 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { getActiveUserFromStorage, ANONYMOUS_USER_UUID } from "./user";
 import { ApiError, NetworkError, HttpError, TimeoutError } from "./errors";
+import { saveUser } from "./db";
 import * as log from "@tauri-apps/plugin-log";
 
 // --- 类型定义 ---
@@ -45,11 +46,49 @@ interface RequestOptions extends RequestInit {
 // --- 核心实现 ---
 
 /**
+ * 刷新令牌的内部函数
+ */
+async function refreshAccessToken(activeUser: any): Promise<string> {
+  const refreshUrl = `${activeUser.serverAddress}/api/refresh`;
+  log.info(`正在尝试为用户 ${activeUser.username} 刷新 Access Token...`);
+  
+  const response = await fetch(refreshUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token: activeUser.refreshToken }),
+    danger: { acceptInvalidCerts: true, acceptInvalidHostnames: true },
+  });
+
+  if (!response.ok) {
+    log.error(`用户 ${activeUser.username} 的令牌刷新请求失败: ${response.status}`);
+    throw new ApiError("会话已过期，请重新登录。", 401);
+  }
+
+  const data = await response.json();
+  const newUser = {
+    ...activeUser,
+    token: data.accessToken,
+    refreshToken: data.refreshToken,
+  };
+
+  // 更新本地数据库
+  await saveUser(newUser);
+  // 更新 localStorage 以便后续请求使用新令牌
+  window.localStorage.setItem("activeUser", JSON.stringify(newUser));
+
+  log.info(`用户 ${activeUser.username} 的 Access Token 刷新成功。`);
+  return data.accessToken;
+}
+
+/**
  * 一个健壮的 fetch 封装，它在每次调用时动态读取认证信息。
  *
  * @template T - 期望的响应数据类型。
  * @param {string} endpoint - API 的端点路径 (e.g., '/api/v1/profile')。
  * @param {RequestOptions} [options={}] - fetch 请求的配置选项。
+ * @param {boolean} [isRetry=false] - 是否为重试请求。
  * @returns {Promise<T>} - 解析后的响应数据。
  * @throws {ApiError} 如果用户未登录或认证信息不完整。
  * @throws {TimeoutError} 如果请求超时。
@@ -59,6 +98,7 @@ interface RequestOptions extends RequestInit {
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {},
+  isRetry = false,
 ): Promise<T> {
   // 在请求发起前，从 localStorage 动态获取当前用户信息
   const activeUser = getActiveUserFromStorage();
@@ -105,6 +145,19 @@ export async function apiClient<T>(
 
     // 6. 检查 HTTP 响应状态
     if (!response.ok) {
+      // 如果是 401 错误且不是重试请求，尝试刷新令牌
+      if (response.status === 401 && !isRetry && activeUser?.refreshToken) {
+        log.info("检测到 401 错误，尝试刷新令牌...");
+        try {
+          await refreshAccessToken(activeUser);
+          // 重新发起请求
+          return await apiClient(endpoint, options, true);
+        } catch (refreshError) {
+          log.error(`令牌刷新失败: ${refreshError}`);
+          // 刷新失败，继续执行后面的错误抛出逻辑
+        }
+      }
+
       let errorBody;
       try {
         errorBody = await response.json();
@@ -132,7 +185,7 @@ export async function apiClient<T>(
     clearTimeout(timeoutId);
 
     // 8. 错误分类与处理
-    if (error instanceof ApiError) {
+    if (error instanceof ApiError || error instanceof HttpError) {
       throw error;
     }
     if (error instanceof DOMException && error.name === "AbortError") {

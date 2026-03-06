@@ -9,4 +9,5 @@ export interface Claims {
 export interface loginResponse {
   accessToken: string;
   tokenType: string;
+  refreshToken: string;
 }

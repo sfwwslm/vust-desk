@@ -44,12 +44,20 @@ fn db_url(app: &tauri::App) -> String {
 
 /// 获取所有数据库迁移脚本
 fn all_migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "baseline_schema",
-        kind: MigrationKind::Up,
-        sql: include_str!("../../migrations/0001_baseline.sql"),
-    }]
+    vec![
+        Migration {
+            version: 1,
+            description: "baseline_schema",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0001_baseline.sql"),
+        },
+        Migration {
+            version: 2,
+            description: "add_refresh_token",
+            kind: MigrationKind::Up,
+            sql: include_str!("../../migrations/0002_add_refresh_token.sql"),
+        },
+    ]
 }
 
 /// 初始化数据库并应用所有迁移

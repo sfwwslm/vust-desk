@@ -241,13 +241,14 @@ export async function saveUser(user: User): Promise<void> {
 
   if (existingUser.length === 0) {
     await dbClient.execute(
-      "INSERT INTO users (uuid, username, server_address, server_instance_uuid, token) VALUES ($1, $2, $3, $4, $5)",
+      "INSERT INTO users (uuid, username, server_address, server_instance_uuid, token, refresh_token) VALUES ($1, $2, $3, $4, $5, $6)",
       [
         user.uuid,
         user.username,
         user.serverAddress,
         user.serverInstanceUuid,
         user.token,
+        user.refreshToken,
       ],
     );
     // 新用户保存后，也为他们创建默认分类
@@ -256,12 +257,13 @@ export async function saveUser(user: User): Promise<void> {
   } else {
     // / 更新用户信息
     await dbClient.execute(
-      "UPDATE users SET username = $1, server_address = $2, server_instance_uuid = $3, token = $4 WHERE uuid = $5",
+      "UPDATE users SET username = $1, server_address = $2, server_instance_uuid = $3, token = $4, refresh_token = $5 WHERE uuid = $6",
       [
         user.username,
         user.serverAddress,
         user.serverInstanceUuid,
         user.token,
+        user.refreshToken,
         user.uuid,
       ],
     );

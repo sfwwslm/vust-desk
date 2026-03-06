@@ -241,6 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           serverInstanceUuid: claims.iss,
           isLoggedIn: 1, // 标记为已登录
           token: res.accessToken,
+          refreshToken: res.refreshToken,
         };
 
         await saveUser(newUser);

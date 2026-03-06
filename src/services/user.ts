@@ -27,6 +27,10 @@ export interface User {
    * 登录成功后获取的访问令牌。
    */
   token?: string;
+  /**
+   * 登录成功后获取的刷新令牌。
+   */
+  refreshToken?: string;
 }
 
 /**
@@ -135,7 +139,7 @@ export async function updateUserServerAddress(
 export const getAllUsers = async (): Promise<User[]> => {
   try {
     const users = await dbClient.select<User>(
-      "SELECT uuid, username, is_logged_in AS isLoggedIn, server_address AS serverAddress, server_instance_uuid AS serverInstanceUuid, token FROM users WHERE is_logged_in = 1",
+      "SELECT uuid, username, is_logged_in AS isLoggedIn, server_address AS serverAddress, server_instance_uuid AS serverInstanceUuid, token, refresh_token AS refreshToken FROM users WHERE is_logged_in = 1",
     );
     return users;
   } catch (error) {
