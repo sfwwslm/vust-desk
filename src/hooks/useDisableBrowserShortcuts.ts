@@ -21,6 +21,7 @@ const isBlockedShortcut = (event: KeyboardEvent) => {
       key === "f" ||
       key === "u" ||
       key === "l" ||
+      key === "g" ||
       key === "w" ||
       key === "n" ||
       key === "t" ||
